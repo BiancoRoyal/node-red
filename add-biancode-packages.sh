@@ -3,3 +3,4 @@
 cd ./node_modules
 
 ln -s ~/Development/github/biancode/node-red-contrib-opcua-client-api node-red-contrib-opcua-client-api
+# ln -s ~/Development/github/biancode/node-red-contrib-opcua-client-api node-red-contrib-opcua-client

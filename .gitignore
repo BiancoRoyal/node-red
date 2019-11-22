@@ -24,3 +24,5 @@ docs
 !packages/node_modules/**/docs
 
 .idea/
+
+package-lock.json
