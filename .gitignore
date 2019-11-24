@@ -26,3 +26,5 @@ docs
 .idea/
 
 package-lock.json
+
+pki/untrusted/
