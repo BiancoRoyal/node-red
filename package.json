@@ -10,7 +10,7 @@
     },
     "private": "true",
     "scripts": {
-        "start": "node packages/node_modules/node-red/red.js --safe",
+        "start": "DEBUG=contribModbus*,modbus-serial*,opcuaIIoT* node packages/node_modules/node-red/red.js --safe",
         "test": "grunt",
         "build": "grunt build",
         "docs": "grunt docs"
