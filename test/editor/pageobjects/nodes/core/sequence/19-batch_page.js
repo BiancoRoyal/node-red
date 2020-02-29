@@ -18,14 +18,22 @@ var util = require('util');
 
 var nodePage = require('../../node_page');
 
-function htmlNode(id) {
+function batchNode(id) {
     nodePage.call(this, id);
 }
 
-util.inherits(htmlNode, nodePage);
-
-htmlNode.prototype.setSelector = function (tag) {
-    browser.setValue('#node-input-tag', tag);
+batchNode.prototype.setMode = function (mode) {
+    browser.selectWithWait('#node-input-mode', mode);
 }
 
-module.exports = htmlNode;
+batchNode.prototype.setCount = function (count) {
+    browser.setValue('#node-input-count', count);
+}
+
+batchNode.prototype.setOverlap = function (overlap) {
+    browser.setValue('#node-input-overlap', overlap);
+}
+
+util.inherits(batchNode, nodePage);
+
+module.exports = batchNode;

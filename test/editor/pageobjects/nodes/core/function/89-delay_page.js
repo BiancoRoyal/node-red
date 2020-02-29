@@ -14,18 +14,20 @@
  * limitations under the License.
  **/
 
-var util = require('util');
+var util = require("util");
 
-var nodePage = require('../../node_page');
+var nodePage = require("../../node_page");
 
-function htmlNode(id) {
+var keyPage = require("../../../util/key_page");
+
+function delayNode(id) {
     nodePage.call(this, id);
 }
 
-util.inherits(htmlNode, nodePage);
+util.inherits(delayNode, nodePage);
 
-htmlNode.prototype.setSelector = function (tag) {
-    browser.setValue('#node-input-tag', tag);
+delayNode.prototype.setTimeout = function (timeout) {
+    browser.setValue('//*[@id="node-input-timeout"]', timeout);
 }
 
-module.exports = htmlNode;
+module.exports = delayNode;
