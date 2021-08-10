@@ -7,7 +7,9 @@
 .sessions.json
 .settings
 .tern-project
+.i18n-editor-metadata
 *.backup
+*.bak
 *_cred*
 coverage
 credentials.json
@@ -29,3 +31,6 @@ docs
 package-lock.json
 
 pki/untrusted/
+
+.nyc_output
+sync.ffs_db

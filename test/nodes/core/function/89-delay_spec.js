@@ -18,6 +18,7 @@ var should = require("should");
 
 var delayNode = require("nr-test-utils").require("@node-red/nodes/core/function/89-delay.js");
 var helper = require("node-red-node-test-helper");
+var RED = require("nr-test-utils").require("node-red/lib/red");
 
 var GRACE_PERCENTAGE=10;
 
@@ -35,6 +36,7 @@ describe('delay Node', function() {
     });
 
     afterEach(function(done) {
+        RED.settings.nodeMessageBufferMaxLength = 0;
         helper.unload();
         helper.stopServer(done);
     });
@@ -150,6 +152,7 @@ describe('delay Node', function() {
      * We send a message, take a timestamp then when the message is received by the helper node, we take another timestamp.
      * Then check if the message has been delayed by the expected amount.
      */
+
     it('delays the message in seconds', function(done) {
         genericDelayTest(0.5, "seconds", done);
     });
@@ -176,14 +179,14 @@ describe('delay Node', function() {
      * @param nbUnit - the multiple of the unit, aLimit Message for nbUnit Seconds
      * @param runtimeInMillis - when to terminate run and count messages received
      */
-    function genericRateLimitSECONDSTest(aLimit, nbUnit, runtimeInMillis, done) {
+    function genericRateLimitSECONDSTest(aLimit, nbUnit, runtimeInMillis, rateValue, done) {
         var flow = [{"id":"delayNode1","type":"delay","nbRateUnits":nbUnit,"name":"delayNode","pauseType":"rate","timeout":5,"timeoutUnits":"seconds","rate":aLimit,"rateUnits":"second","randomFirst":"1","randomLast":"5","randomUnits":"seconds","drop":false,"wires":[["helperNode1"]]},
                     {id:"helperNode1", type:"helper", wires:[]}];
         helper.load(delayNode, flow, function() {
             var delayNode1 = helper.getNode("delayNode1");
             var helperNode1 = helper.getNode("helperNode1");
             var receivedMessagesStack = [];
-            var rate = 1000/aLimit;
+            var rate = 1000 / aLimit * nbUnit;
 
             var receiveTimestamp;
 
@@ -201,7 +204,7 @@ describe('delay Node', function() {
 
             var i = 0;
             for (; i < possibleMaxMessageCount + 1; i++) {
-                delayNode1.receive({payload:i});
+                delayNode1.receive({ payload: i, rate: rateValue });
             }
 
             setTimeout(function() {
@@ -224,17 +227,22 @@ describe('delay Node', function() {
     }
 
     it('limits the message rate to 1 per second', function(done) {
-        genericRateLimitSECONDSTest(1, 1, 1500, done);
+        genericRateLimitSECONDSTest(1, 1, 1500, null, done);
     });
 
     it('limits the message rate to 1 per 2 seconds', function(done) {
         this.timeout(6000);
-        genericRateLimitSECONDSTest(1, 2, 3000, done);
+        genericRateLimitSECONDSTest(1, 2, 3000, null, done);
     });
 
     it('limits the message rate to 2 per seconds, 2 seconds', function(done) {
         this.timeout(6000);
-        genericRateLimitSECONDSTest(2, 1, 2100, done);
+        genericRateLimitSECONDSTest(2, 1, 2100, null, done);
+    });
+
+    it('limits the message rate using msg.rate', function (done) {
+        RED.settings.nodeMessageBufferMaxLength = 3;
+        genericRateLimitSECONDSTest(1, 1, 1500, 2000, done);
     });
 
     /**
@@ -243,7 +251,7 @@ describe('delay Node', function() {
      * @param nbUnit - the multiple of the unit, aLimit Message for nbUnit Seconds
      * @param runtimeInMillis - when to terminate run and count messages received
      */
-    function dropRateLimitSECONDSTest(aLimit, nbUnit, runtimeInMillis, done) {
+    function dropRateLimitSECONDSTest(aLimit, nbUnit, runtimeInMillis, rateValue, done) {
         var flow = [{"id":"delayNode1","type":"delay","name":"delayNode","pauseType":"rate","timeout":5,"nbRateUnits":nbUnit,"timeoutUnits":"seconds","rate":aLimit,"rateUnits":"second","randomFirst":"1","randomLast":"5","randomUnits":"seconds","drop":true,"wires":[["helperNode1"]]},
                     {id:"helperNode1", type:"helper", wires:[]}];
         helper.load(delayNode, flow, function() {
@@ -269,7 +277,7 @@ describe('delay Node', function() {
             var possibleMaxMessageCount = Math.ceil(aLimit * (runtimeInMillis / 1000) + aLimit); // +aLimit as at the start of the 2nd period, we're allowing the 3rd burst
 
             var i = 0;
-            delayNode1.receive({payload:i});
+            delayNode1.receive({ payload: i, rate: rateValue });
             i++;
             for (; i < possibleMaxMessageCount + 1; i++) {
                 setTimeout(function() {
@@ -306,17 +314,23 @@ describe('delay Node', function() {
 
     it('limits the message rate to 1 per second, 4 seconds, with drop', function(done) {
         this.timeout(6000);
-        dropRateLimitSECONDSTest(1, 1, 4000, done);
+        dropRateLimitSECONDSTest(1, 1, 4000, null, done);
     });
 
     it('limits the message rate to 1 per 2 seconds, 4 seconds, with drop', function(done) {
         this.timeout(6000);
-        dropRateLimitSECONDSTest(1, 2, 4500, done);
+        dropRateLimitSECONDSTest(1, 2, 4500, null, done);
     });
 
     it('limits the message rate to 2 per second, 5 seconds, with drop', function(done) {
         this.timeout(6000);
-        dropRateLimitSECONDSTest(2, 1, 5000, done);
+        dropRateLimitSECONDSTest(2, 1, 5000, null, done);
+    });
+
+    it('limits the message rate with drop using msg.rate', function (done) {
+        this.timeout(6000);
+        RED.settings.nodeMessageBufferMaxLength = 3;
+        dropRateLimitSECONDSTest(2, 1, 5000, 1000, done);
     });
 
     /**
@@ -615,6 +629,52 @@ describe('delay Node', function() {
         });
     });
 
+    it('can part flush delay queue', function(done) {
+        this.timeout(2000);
+        var flow = [{"id":"delayNode1","type":"delay","name":"delayNode","pauseType":"delay","timeout":1,"timeoutUnits":"seconds","rate":2,"rateUnits":"second","randomFirst":"1","randomLast":"5","randomUnits":"seconds","drop":false,"wires":[["helperNode1"]]},
+                    {id:"helperNode1", type:"helper", wires:[]}];
+        helper.load(delayNode, flow, function() {
+            var delayNode1 = helper.getNode("delayNode1");
+            var helperNode1 = helper.getNode("helperNode1");
+            var t = Date.now();
+            var c = 0;
+            helperNode1.on("input", function(msg) {
+                msg.should.have.a.property('payload');
+                msg.should.have.a.property('topic');
+                try {
+                    if (msg.topic === "foo") {
+                        msg.payload.should.equal(1);
+                        (Date.now() - t).should.be.approximately(0,100);
+                        c = c + 1;
+                    }
+                    else if (msg.topic === "bar") {
+                        msg.payload.should.equal(1);
+                        (Date.now() - t).should.be.approximately(200,100);
+                        c = c + 1;
+                    }
+                    else if (msg.topic === "boo") {
+                        msg.payload.should.equal(1);
+                        (Date.now() - t).should.be.approximately(400,100);
+                        c = c + 1;
+                    }
+                    if (c === 5) { done(); }
+                } catch(e) {
+                    done(e);
+                }
+            });
+
+            // send test messages
+            delayNode1.receive({payload:1,topic:"foo"});
+            setImmediate( function() { delayNode1.receive({payload:1,topic:"foo"}); }  );
+            setImmediate( function() { delayNode1.receive({payload:1,topic:"bar"}); }  );
+            setImmediate( function() { delayNode1.receive({payload:1,topic:"boo"}); }  );
+            setImmediate( function() { delayNode1.receive({payload:1,topic:"boo"}); }  );
+            setImmediate( function() { delayNode1.receive({flush:2});  });
+            setTimeout( function() { delayNode1.receive({flush:1});  }, 200);
+            setTimeout( function() { delayNode1.receive({flush:4});  }, 400);
+        });
+    });
+
     it('can reset delay queue', function(done) {
         this.timeout(2000);
         var flow = [{"id":"delayNode1","type":"delay","name":"delayNode","pauseType":"delay","timeout":1,"timeoutUnits":"seconds","rate":2,"rateUnits":"second","randomFirst":"1","randomLast":"5","randomUnits":"seconds","drop":false,"wires":[["helperNode1"]]},
@@ -683,6 +743,52 @@ describe('delay Node', function() {
         });
     });
 
+    it('can part flush rate limit queue', function(done) {
+        this.timeout(2000);
+        var flow = [{"id":"delayNode1","type":"delay","name":"delayNode","pauseType":"rate","timeout":1,"timeoutUnits":"seconds","rate":2,"rateUnits":"second","randomFirst":"1","randomLast":"5","randomUnits":"seconds","drop":false,"wires":[["helperNode1"]]},
+                    {id:"helperNode1", type:"helper", wires:[]}];
+        helper.load(delayNode, flow, function() {
+            var delayNode1 = helper.getNode("delayNode1");
+            var helperNode1 = helper.getNode("helperNode1");
+            var t = Date.now();
+            var c = 0;
+            helperNode1.on("input", function(msg) {
+                msg.should.have.a.property('payload');
+                msg.should.have.a.property('topic');
+                try {
+                    if (msg.topic === "foo") {
+                        msg.payload.should.equal(1);
+                        (Date.now() - t).should.be.approximately(0,100);
+                        c = c + 1;
+                    }
+                    else if (msg.topic === "bar") {
+                        msg.payload.should.equal(1);
+                        (Date.now() - t).should.be.approximately(200,100);
+                        c = c + 1;
+                    }
+                    else if (msg.topic === "boo") {
+                        msg.payload.should.equal(1);
+                        (Date.now() - t).should.be.approximately(400,100);
+                        c = c + 1;
+                    }
+                    if (c === 5) { done(); }
+                } catch(e) {
+                    done(e);
+                }
+            });
+
+            // send test messages
+            delayNode1.receive({payload:1,topic:"foo"});
+            setImmediate( function() { delayNode1.receive({payload:1,topic:"foo"}); }  );
+            setImmediate( function() { delayNode1.receive({payload:1,topic:"foo"}); }  );
+            setImmediate( function() { delayNode1.receive({payload:1,topic:"bar"}); }  );
+            setImmediate( function() { delayNode1.receive({payload:1,topic:"boo"}); }  );
+            setImmediate( function() { delayNode1.receive({flush:2});  });
+            setTimeout( function() { delayNode1.receive({flush:1});  }, 200);
+            setTimeout( function() { delayNode1.receive({flush:4});  }, 400);
+        });
+    });
+
     it('can reset rate limit queue', function(done) {
         this.timeout(2000);
         var flow = [{"id":"delayNode1","type":"delay","name":"delayNode","pauseType":"rate","timeout":1,"timeoutUnits":"seconds","rate":2,"rateUnits":"second","randomFirst":"1","randomLast":"5","randomUnits":"seconds","drop":false,"wires":[["helperNode1"]]},
@@ -718,5 +824,97 @@ describe('delay Node', function() {
             setImmediate( function() { delayNode1.receive({payload:1,topic:"bar"}); }  );          // send something with blank topic
             setImmediate( function() { delayNode1.receive({reset:true});  });          // reset the queue
         });
+    });
+
+    /* Messaging API support */
+    function mapiDoneTestHelper(done, pauseType, drop, msgAndTimings) {
+        const completeNode = require("nr-test-utils").require("@node-red/nodes/core/common/24-complete.js");
+        const flow = [{id:"delayNode1",type:"delay",name:"delayNode", pauseType:pauseType, timeout:"1", timeoutUnits: "seconds",
+                       rate: "1", nbRateUnits: "1", rateUnits: "second", randomFirst:"950", randomLast:"1050",randomUnits:"milliseconds",
+                       drop: drop, wires: [[]]},
+                      {id:"completeNode1",type:"complete",scope: ["delayNode1"],uncaught:false,wires:[["helperNode1"]]},
+                      {id:"helperNode1",type:"helper", wires:[[]]}];
+        const numMsgs = msgAndTimings.length;
+        helper.load([delayNode, completeNode], flow, function () {
+            const delayNode1 = helper.getNode("delayNode1");
+            const helperNode1 = helper.getNode("helperNode1");
+            const t = Date.now();
+            let c = 0;
+            helperNode1.on("input", function (msg) {
+                msg.should.have.a.property('payload', msgAndTimings[c].msg.payload);
+                (Date.now() - t).should.be.approximately(msgAndTimings[c].avr, msgAndTimings[c].var);
+                c += 1;
+                if ( c === numMsgs) {
+                    done();
+                }
+            });
+            for (let i = 0; i < numMsgs; i++) {
+                setImmediate( function() { delayNode1.receive(msgAndTimings[i].msg); } );
+            }
+        });
+    }
+
+    it('calls done when queued message is emitted (type: delay)', function(done) {
+        mapiDoneTestHelper(done, "delay", false, [{msg:{payload:1}, avr:1000, var:100}]);
+    });
+    it('calls done when queued message is emitted (type: delayv)', function(done) {
+        mapiDoneTestHelper(done, "delayv", false, [{msg:{payload:1, delay:1000}, avr:1000, var:100}]);
+    });
+    it('calls done when queued message is emitted (type: delay)', function(done) {
+        mapiDoneTestHelper(done, "random", false, [{msg:{payload:1}, avr:1000, var:100}]);
+    });
+    it('calls done when queued message is cleared (type: delay)', function(done) {
+        mapiDoneTestHelper(done, "delay", false, [{msg:{payload:1}, avr:100, var:100},
+                                                  {msg:{payload:2,reset:true}, avr:100, var:100}]);
+    });
+    it('calls done when queued message is cleared (type: delayv)', function(done) {
+        mapiDoneTestHelper(done, "delayv", false, [{msg:{payload:1, delay:1000}, avr:100, var:100},
+                                                   {msg:{payload:2, reset:true}, avr:100, var:100}]);
+    });
+    it('calls done when queued message is cleared (type: random)', function(done) {
+        mapiDoneTestHelper(done, "random", false, [{msg:{payload:1}, avr:100, var:100},
+                                                   {msg:{payload:2,reset:true}, avr:100, var:100}]);
+    });
+    it('calls done when queued message is flushed (type: delay)', function(done) {
+        mapiDoneTestHelper(done, "delay", false, [{msg:{payload:1}, avr:100, var:100},
+                                                  {msg:{payload:2,flush:true}, avr:100, var:100}]);
+    });
+    it('calls done when queued message is flushed (type: delayv)', function(done) {
+        mapiDoneTestHelper(done, "delayv", false, [{msg:{payload:1, delay:1000}, avr:100, var:100},
+                                                   {msg:{payload:2, flush:true}, avr:100, var:100}]);
+    });
+    it('calls done when queued message is flushed (type: random)', function(done) {
+        mapiDoneTestHelper(done, "random", false, [{msg:{payload:1}, avr:100, var:100},
+                                                  {msg:{payload:2,flush:true}, avr:100, var:100}]);
+    });
+    it('calls done when rated message is emitted (drop: false)', function(done) {
+        mapiDoneTestHelper(done, "rate", false, [{msg:{payload:1}, avr:0, var:100},
+                                                 {msg:{payload:2}, avr:1000, var:100}]);
+    });
+    it('calls done when rated message is emitted (drop: true)', function(done) {
+        mapiDoneTestHelper(done, "rate", true, [{msg:{payload:1}, avr:0, var:100},
+                                                {msg:{payload:2}, avr:0, var:100}]);
+    });
+    it('calls done when rated message is flushed', function(done) {
+        mapiDoneTestHelper(done, "rate", false, [{msg:{payload:1}, avr:0, var:100},
+                                                 {msg:{payload:2}, avr:0, var:100},
+                                                 {msg:{payload:3,flush:true}, avr:0, var:100}]);
+    });
+    it('calls done when queued messages are sent (queue)', function(done) {
+        this.timeout(3000);
+        mapiDoneTestHelper(done, "queue", false, [{msg:{payload:1,topic:"A"}, avr:1000, var:700},
+                                                  {msg:{payload:2,topic:"B"}, avr:2000, var:700}]);
+    });
+    it('calls done when queued messages are sent (timed)', function(done) {
+        mapiDoneTestHelper(done, "timed", false, [{msg:{payload:1,topic:"a"}, avr:500, var:700},
+                                                  {msg:{payload:2,topic:"b"}, avr:500, var:700}]);
+    });
+    it('calls done when queue is reset (queue/timed)', function(done) {
+        mapiDoneTestHelper(done, "timed", false, [{msg:{payload:1,topic:"a"}, avr:0, var:500},
+                                                  {msg:{payload:2,reset:true}, avr:0, var:500}]);
+    });
+    it('calls done when queue is flushed (queue/timed)', function(done) {
+        mapiDoneTestHelper(done, "timed", false, [{msg:{payload:1,topic:"a"}, avr:0, var:500},
+                                                  {msg:{payload:2,flush:true}, avr:0, var:500}]);
     });
 });

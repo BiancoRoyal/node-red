@@ -1,3 +1,696 @@
+#### 2.0.5: Maintenance Release
+
+Editor
+
+ - Remove default ctrl-enter keybinding from monaco editor Fixes #3093
+
+Runtime
+
+ - Update tar dependency
+ - Add support for maintenance streams in generate-publish-script
+
+
+Nodes
+
+ - Fix regression in Join node when manual joining array with msg.parts present Fixes #3096
+
+#### 2.0.4: Maintenance Release
+
+Editor
+
+ - Fix tab fade CSS for when using themes (#3085) @bonanitech
+ - Handle just-copied-but-not-deployed node with credentials in editor Fixes #3090
+
+Nodes
+
+ - Filter: Fix RBE node handling of default topi property Fixes #3087
+ - HTTP Request: Handle partially encoded url query strings in request node
+ - HTTP Request: Fix support for supplied CA certs (#3089) @hardillb
+ - HTTP Request: Ensure TLS Cert is used (#3092) @hardillb
+ - Inject: Fix inject now button unable to send empty props
+ - Inject: Inject now button success notification should use label with updated props
+
+#### 2.0.3: Maintenance Release
+
+Nodes
+
+ - HTML: Fix HTML parsing when body is included in the select tag Fixes #3079
+ - HTTP Request: Preserve case of user-provided http headers in request node Fixes #3081
+ - HTTP Request: Set decompress to false for HTTP Request to keep 1.x compatibility Fixes #3083
+ - HTTP Request: Add unit tests for HTTP Request encodeURI and error response
+ - HTTP Request: Do not throw HTTP errors in request node Fixes #3082
+ - HTTP Request: Ensure uri is properly encoded before passing to got module Fixes #3080
+
+#### 2.0.2: Maintenance Release
+
+Runtime
+
+ - Use file:// url with dynamic import
+ - Detect if agent-base has patched https.request and undo it Fixes #3072
+
+Editor
+
+ - Fix tab fade css because Safari Fixes #3073
+ - Fix error closing library dialog with monaco
+ - Handle other error types in Manage Palette view
+
+
+Nodes
+
+ - HTTP Request node - ignore invalid cookies rather than fail request Fixes #3075
+ - Fix msg.reset handling in Delay node Fixes #3074
+
+#### 2.0.1: Maintenance Release
+
+Nodes
+
+ - Function: Ensure default module export is exposed in Function node
+
+#### 2.0.0: Milestone Release
+
+**Migration from 1.x**
+
+ - Node-RED now requires Node.js 12.x or later.
+
+ - The following nodes have had significant dependency updates. Unless stated,
+   they should be fully backward compatible.
+
+   - RBE:  Relabelled as 'filter' to make it more discoverable and made part of
+     the core palette, rather than as a separate module.
+   - Tail: This node has been removed from the default palette. You can reinstall it
+     from node-red-node-tail
+   - HTTP Request: Reimplemented with a different underlying module. We have
+     tried to maintain 100% functional compatibility, but it is possible
+     some edge cases remain.
+   - JSON: The schema validation option no longer supports JSON-Schema draft-04
+   - HTML: Its underlying module has had a major version update. Should be fully
+     backward compatible.
+
+ - `functionExternalModules` is now enabled by default for new installs.
+   If you have an existing settings file that contains this setting, you will
+   need to set it to `true` yourself.
+
+   The external modules will now get installed in your Node-RED user directory,
+   (`~/.node-red`) rather than in a subdirectory. This means all dependencies will
+   be listed in your top-level `package.json`. If you have existing external modules,
+   they will get reinstalled to the new location when you first run Node-RED 2.0.
+
+
+Runtime
+
+ - Fix missing dependencies (#3052, #2057) @kazuhitoyokoi
+ - Ensure node.types is defined if node html file missing
+ - Fix reporting of type_already_registered error
+ - Move install location of external modules (#3064) @knolleary
+
+Editor
+
+ - Update translations (#3063) @kazuhitoyokoi
+ - Add a slight fade to tab labels that overflow
+ - Show config node details when selected in outliner
+ - Fix layout of info outliner for subflow entries
+
+Nodes
+
+ - Delay: let `msg.flush` specify how many messages to flush from node (#3059) @dceejay
+ - Function: external modules is now enabled by default (#3065) @knolleary
+ - Function: external modules now supports both ES6 and CJS modules (#3065) @knolleary
+ - WebSocket: add option for client node to send automatic pings (#3056) @knolleary
+
+
+##### 2.0.0-beta.2: Beta Release
+
+Runtime
+
+ - Add `node-red admin init` (via `node-red-admin@2.1.0`)
+ - Move to GH Actions rather than Travis for build (#3042) @knolleary
+
+Editor
+
+ - Include hasUser=false config nodes when exporting whole flow (#3048)
+ - Emit nodes:change for any updated config node when node deleted/added
+ - Fix padding of compact notification Closes #3045
+ - Ensure any html in changelog is escaped before displaying
+ - Add support for Map/Set property types on Debug (#3040) @knolleary
+ - Add 'theme' to default settings file
+ - Add RED.view.annotations api (#3032) @knolleary
+ - Update monaco editor to V0.25.2 (#3031) @Steve-Mcl
+ - Lower tray zIndex when overlay tray being opened Fixes #3019
+ - Reduce z-Index of Function expand buttons to prevent overlap Part of #3019
+ - Ensure RED.clipboard.import displays the right library Fixes #3021
+ - Batch messages sent over comms to prevent flooding (#3025) @knolleary
+ - Allow RED.popover.panel to specify a closeButton to ignore click events on
+ - Use browser default language for initial page load
+ - Add css var for node font color
+ - Fix label padding of toggleButton
+ - Give sidebar open tab a bit more room for its label
+ - Various Monaco updates (#3015) @Steve-Mcl
+ - Log readOnly on startup (#3024) @sammachin
+ - Translation updates (#3020 #3022) @HiroyasuNishiyama @kazuhitoyokoi
+
+Nodes
+
+ - HTTP Request: Fix proxy handling (#3044) @hardillb
+ - HTTP Request: Handle basic auth with @ in username (#3017) @hardillb
+ - Add Japanese translation for file-in node (#3037 #3039) @kazuhitoyokoi
+ - File In: Add option for file-in node to include all properties (default off) (#3035) @dceejay
+ - Exec: add windowsHide option to hide windows under Windows (#3026) @natcl
+ - Support loading external module sub path Fixes #3023
+
+##### 2.0.0-beta.1: Beta Release
+
+
+
+Runtime
+
+ - [MAJOR] Set minimum node version to 12.
+ - [MAJOR] Fix flowfile name to flows.json in settings (#2951) @dceejay
+ - [MAJOR] Update to latest i18n in editor and runtime (#2940) @knolleary
+ - [MAJOR] Deprecate usage of httpRoot (#2953) @knolleary
+ - Add pre/postInstall hooks to npm install handling (#2936) @knolleary
+ - Add engine-strict flag to npm install args (#2965) @nileio
+ - Restructure default settings.js to be more organised (#3012) @knolleary
+ - Ensure httpServerOptions gets applied to ALL the express apps
+ - Allow RED.settings.set to replace string property with object property
+ - Update debug tests to handle compact comms format
+ - Updates to encode/decode message when passed over debug comms link
+ - Remove all input event listeners on a node once it is closed
+ - Move hooks to util package
+ - Rework hooks structure to be a linkedlist
+ - Update dependencies (#2922) @knolleary
+
+Editor
+
+ - [MAJOR] Change node id generation to give fixed length values without '.' (#2987) @knolleary
+ - [MAJOR] Add Monaco code editor (#2971) @Steve-Mcl
+ - Update to latest Monaco (#3007) @Steve-Mcl
+ - Update Node-RED Function typings in Monaco (#3008) @Steve-Mcl
+ - Add css named variables for certain key colours (#2994) @knolleary
+ - Improve contrast of export dialog JSON font color
+ - Switch editableList buttons from <a> to <button> elements
+ - Add option to RED.nodes.createCompleteNodeSet to include node dimensions
+ - Fix css of node help table of contents elements
+ - Improve red-ui-node-icon css and add red-ui-node-icon-small modifier class
+ - Add RED.hooks to editor
+ - Add viewAddPort viewRemovePort viewAddNode viewRemoveNode hooks to view
+ - Use paletteLabel if set in help sidebar
+ - Add missing args from JSONata $now signature
+
+Nodes
+
+ - [MAJOR] Relabel RBE node as 'filter' and move into core. Also remove tail (#2944) @dceejay
+ - [MAJOR] HTTP Request: migrate to 'got' module (#2952) @knolleary
+ - [MAJOR] Move Inject node to CronosJS module (#2959) @knolleary
+ - [MAJOR] JSON: Update ajv to 8.2.0 - drop support for JSON-Schema draft-04 (#2969) @knolleary
+ - [MAJOR] HTML node: cheerio update to 1.x (#3011) @knolleary
+ - Join: change default manual mode to object (#2931) @knolleary
+ - File node: Add fileWorkingDirectory (#2932) @knolleary
+ - Delay node enhancements (#2294) @kazuhitoyokoi (#2949) @dceejay
+ - Add Japanese translations for delay node enhancements (#2958) @kazuhitoyokoi
+ - Inject node: reorder TypedInput options (#2961) @dceejay
+ - HTTP Request: update to work with proxies (#2983) @hardillb (#3009) @hardillb
+ - HTTP Request: fix msg.responseUrl (#2986) @hardillb
+ - TLS: Add ALPN support to TLS node (#2988) @hardillb
+ - Inject: add "Inject now" button to edit dialog (#2990) @Steve-Mcl
+
+### 1.3.5 Maintenance Release
+
+Editor
+
+ - Open subflow tab next to active tab rather than at the end
+ - Shrink default notification box
+ - Support mousewheel scroll in tab bar
+ - Revert some of #2967 to fix treeList gutter width calculation
+ - Prevent unknown node from breaking editor
+ - Stop module with missing types from preventing editor load
+ - Handle sidebar tab that no longer exists when setting first active
+ - Fix plugin loading when browser sends unrecognised lang
+ - Prevent error whilst drag/drop importing from leaving dropTarget visible Fixes #2982
+ - Fix scaling issues when dragging nodes into scaled workspace
+ - Fix incorrect shortcut keys in info tips (#2980) @kazuhitoyokoi
+ - Reduce code duplication around node/label generation
+ - Fix theme handling when no editorTheme.page setting
+ - Fix jshint error in treeList
+
+Runtime
+
+ - Fix error handling in runtime/lib/api/nodes
+ - Add Node 16 with sass fixed
+ - Migrate from node-sass to sass (#2984)
+ - Fix "installRetry" was declared a constant and changed (#2974) @aheissenberger
+
+Nodes
+
+ - Function: Fix 'SyntaxError' in Function node when last line of on-stop is a comment
+ - Function: Fix Function tab label names in the node help text Closes #2978
+ - Function: Update Japanese info text of function node (#2985) @HiroyasuNishiyama
+
+### 1.3.4 Maintenance Release
+
+Editor
+ - Allow nodes to access resolved theme files Fixes #2968
+ - Fix importing node to currently flow rather than match its old z value
+ - Don't let 'escape' whilst moving nodes interrupt things Fixes #2960
+ - Sort context stores in TypedInput and ensure default first Fixes #2954
+ - Fix margin between nodes on palette (#2947) @kazuhitoyokoi
+ - Ensure typedInput option is selected in dropdown menu Part of #2945
+ - Ensure typedInput without value has focus class removed Closes #2945
+ - TreeList: Fix remove item when depth=0 and wrong gutter calc (#2967) @hanc2006
+
+Runtime
+ - Handle subflow modules that contain subflows
+ - Timeout http upgrade requests that are not otherwise handled Fixes #2956
+ - Fix error on auto commit for no flow change (#2957) @HiroyasuNishiyama
+
+Nodes
+
+ - CSV: Fix CSV handling of special chars as separators
+ - Delay: Give delay node random mina nd max more space so you can see complete value
+ - Exec: fix grunt fail on exec node test (#2964) @HiroyasuNishiyama
+ - Function: Ensure function expand button is above vertical scrollbar Fixes #2955
+ - Inject: Fix inject node output tooltip extra property count
+
+
+### 1.3.3: Maintenance Release
+
+Editor
+
+ - Fix package semver comparison to allow >1 version increment
+ - Prevent TypedInput label overflowing element Fixes #2941
+ - Remove TypedInput from tab focus when only one type available
+ - Make typedInput.disable more consistent in behaviour Fixes #2942
+ - Fix project credential secret reset handling Part of #2868
+
+Runtime
+
+ - Export package version in Grunt file so docs template can access
+
+Nodes
+
+ - CSV: ensure CSV node can send false as string
+ - HTTPIn: handle application/x-protobuf as Buffer type (#2935 #2938) @hardillb
+ - MQTT: Ensure mqtt-close message is published when closing mqtt nodes
+
+
+### 1.3.2: Maintenance Release
+
+Runtime
+ - Handle package.json without dependencies section
+
+Editor
+
+ - Fix variable reference error in editableList Fixes #2933
+ - Fix handling of user-provided keymap Fixes #2926
+ - Ensure theme login image is passed through to api response Fixes #2929
+ - Add Japanese translations for Node-RED v1.3.1 (#2930) @kazuhitoyokoi
+
+Nodes
+
+ - CSV: Fix CSV parsing with other than , separator
+ - File out: Fix timing of msg.send to be after close
+ - Function: describe `node.outputCount` in help text
+ - MQTT: Fix MQTT Broker TLS config row layout Fixes #2927
+ - Split: add comment to info re $N being number of messages arriving
+
+### 1.3.1: Maintenance Release
+
+Nodes
+
+ - Fix change node form validation
+
+### 1.3.0: Milestone Release
+
+Editor
+
+ - Remember TypedInput selected sub option when switching types Fixes #2896
+ - Show context store name on TypedInput flow/global types Fixes #2793
+ - Add core:go-to-selected-subflow action
+ - Ctrl-dbclick on subflow node opens subflow tab
+ - Add go-to-previous/next-location actions
+ - Fix copy-to-clipboard action in FireFox
+ - Fix select up/down stream when zoomed in or out
+ - Use cursor keys to change selection in workspace
+ - Prevent accidental text selection of subflow toolbar text
+ - Update node-sass to 5.x Fixes #2907
+ - Allow module to provide resources and automatically expose them (#2903) @knolleary
+
+Runtime
+
+ - DE language updates (#2806 #2901 #2913) @heikokue
+ - Remove Node 8 from travis due to node-sass breakage
+ - Allow Flow.getNode to return subflowInstance nodes Related to #2898
+ - Fix credential lookup for nested subflows Fixes #2910
+ - Add externalModules config to settings.js
+ - Add Japanese translations for Node-RED v1.3.0 (#2900)
+ - Fix handling encrypted creds on /flows api
+ - Properly handle credentials passed to /flows api
+ - Fix line-number reporting in errors on node load (#2894) @HiroyasuNishiyama
+
+Nodes
+
+ - Change: Add property validation to Change node rule set Closes #2911
+ - Exec: Allow any property to be appended to command (#2908) @kazuhitoyokoi
+ - HTTP Request: set followAllRedirects to work with POSTs Fixes #2017
+ - Inject: Flag validation errors in Inject node props config Fixes #2914
+ - Function: add node.outputCount to sandbox (#2918) @kristianheljas
+ - Switch: Fix Switch node handling of hasKey rule when property is undefined
+ - Switch: Handle invalid regex set dynamically in Switch node Fixes #2905
+
+
+### 1.3.0-beta.1: Beta Release
+
+Editor
+
+ - Add config node to refer to when exporting subflow
+ - Add confirm dialog when deleting subflow with instances in use (#2845) @knolleary
+ - Add easier ways to find subflow instances
+ - Add enable/disable toggle button for groups in info-outliner (#2844) @knolleary
+ - Add IE11 polyfill to support URI download scheme (#2871) @HiroyasuNishiyama
+ - Add Japanese translations for Node-RED v1.3.0 (#2874) @kazuhitoyokoi
+ - Add preview of exported nodes to Export dialog (#2820) @knolleary
+ - Add RED.plugins module to editor
+ - Add select-connected action (#2877) @knolleary
+ - Add select-up/downstream-nodes action to editor (#2877) @knolleary
+ - Add subflow edit button to palette tooltip
+ - Add subflow meta data edit pane
+ - Add support for library source plugins (#2785) @knolleary
+ - Adds shift-click support for selecting up/down stream nodes
+ - Allow default keymap to be overridden in settings file (#2843) @knolleary
+ - Allow EditableList to have custom buttons (#2881) @bartbutenaers
+ - Allow filtering of debug node output within subflow (#2870) @HiroyasuNishiyama
+ - Ensure the first sidebar tab is shown when editor loads (#2846) @knolleary
+ - Ensure TypedInput Change event is passed type/value properties Fixes #2883
+ - Escape all user input
+ - Filter palette manager nodes based on allow/deny list
+ - Fix check for existing config nodes in subflow export set
+ - Fix handling of + in shortcuts
+ - fix jshint failure (#2850) @HiroyasuNishiyama
+ - Fix keymap entries with multiple keys for same action
+ - fix line break of exporting nodes to clipboard (#2849) @HiroyasuNishiyama
+ - Fix line break of subflow label on palette (#2828)
+ - Fix loading individual module catalog
+ - Fix removing links when deleting node
+ - Fix semver comparison for IE11 (#2888) @knolleary
+ - fixed #2790 swapped description of encodeUrl/encodeUrlComponent and d… (#2791)
+ - Handle timeouts when trying to load node credentials in editor Fixes #2840 (#2841) @knolleary
+ - Hide projects dialog when opening proj with invalid encrypt key
+ - hide unused input field (#2823)
+ - Implement node property typing (#2812) @knolleary
+ - Improve SemVer comparison in Palette Manager (#2821 #2879) @HaKr
+ - Library: properly handle symlinked folders (#2768) @natcl
+ - make flow download code separate utility instead of polyfill
+ - Prevent duplicate keyboard shortcut from being assigned
+ - Prevent rogue mouseup on tab from triggering tab change
+ - Rename paletteEditorEnabled to installerEnabled
+ - Tidy some subflow env props css
+ - Tidy up typedInput syntax
+ - Use subflow.info for help text and meta.type for node type
+
+Runtime
+
+ - Deprecate autoInstallModules for externalModules.autoInstall
+ - Deprecate editorTheme.palette.editable for externalModules.palette.allowInstall
+ - Initial plugin runtime api implementation (#2779) @knolleary
+ - Add initial support for ThemePlugins (#2836) @knolleary
+ - Support npm subflow modules (#2690) @knolleary
+ - Ability to add projects path to the settings file (#2816) @tfmf
+ - Add i18n function to editor plugins when they are registered
+ - Add optional 'lang' to settings file (#2796) @fellinga
+ - Add SubflowModule class for running subflow modules
+ - Add support for settings.externalModules (#2797) @knolleary
+ - Allow default project workflow to be set via settings (#2763) @knolleary
+ - Allow for adding an array of middleware functions (#2788) @kevinGodell
+ - Better logging when deprecated editorTheme.palette.* settings used
+ - Detect externalModule dependencies inside subflow modules
+ - Fix global leak in lib/flows/index.js
+ - Fix numeric status not displaying by ensuring it's a string (#2859) @knolleary
+ - Fully remove when.js dependency (#2772) @knolleary
+ - make nodes with only group change not deployed by nodes deploy mode
+ - Move exec and events components to util module
+ - Nodes log via parent flow to allow flow-info to be added
+ - Restart node only if node's group changes (#2872) @HiroyasuNishiyama
+ - Stop config nodes after flow nodes Fixes #2876 (#2880) @knolleary
+ - Update marked dependency
+ - Use more async funcs in runtime/lib/api to reduce Promise creation
+ - Use npm info to check pending install version
+
+Nodes
+
+ - Allow nested msg properties in msg/flow/global expressions (#2822)
+ - Batch: Messaging API support in Batch node (#2738) @k-toumura
+ - CSV: Handle commas in msg.columns if quoted.
+ - CSV: Fix csv node template reset when array complete (#2854) @dceejay
+ - CSV: Messaging API support in CSV node (#2734) @k-toumura
+ - Debug: Sanitize Debug node name when display enable/disable message
+ - Delay: Add support for Messaging API to delay node (#2733)
+ - Exec: Add settings.execMaxBufferSize to control buffer size of exec node (#2819)
+ - Exec: Don't append msg.payload to command by default (#2818)
+ - Function: Add 'node' object to close scope
+ - Function: allow to load external modules (#2873) @knolleary
+ - Function: Add functionExternalModules to settings and default to false
+ - Join: Fix join node in array mode with repeated messages, and allow reset all (#2869) @dceejay
+ - MQTT: Add MQTT v5 support (#2778 #2886) @Steve-Mcl
+ - Sort: Messaging API support in Sort node (#2744) @k-toumura
+ - Split/Join: Messaging API support in Split/Join nodes (#2750) @k-toumura
+ - Trigger: Messaging API support in Trigger node (#2751) @k-toumura
+ - Add example flows for storage nodes (#2784) @HiroyasuNishiyama
+ - Add example flows for network nodes (#2855) @HiroyasuNishiyama
+ - Add example flows for parser nodes (#2749) @HiroyasuNishiyama
+
+
+
+### 1.2.9: Maintenance Release
+
+Editor
+
+ - Sanitize node type names when displaying in notifications
+ - Sanitize branch name before displaying in notification message
+
+Runtime
+
+ - Handle more valid language codes when validating lang params Fixes #2856
+
+### 1.2.8: Maintenance Release
+
+Editor
+
+ - Ensure subflow help is picked up for palette tooltip Fixes #2834
+ - Improve Ru locale (#2826) @alexk111
+ - Fix scrollbars (#2825) @alexk111
+
+Runtime
+
+ - Restrict project file access to inside the project directory
+ - Validate user-provided language parameter before passing to i18n
+ - Fix grunt release mkdir issue on Node.js 14 (#2827) @alexk111
+ - Prevent crash when coreNodesDir is empty (#2831) @hardillb
+
+Nodes
+
+ - Batch node: Fixing minor typo in node's documentation (#2848) @matthiasradde
+ - Split node: Handle out of order messages as long as one of the messages has msg.parts.count set to the proper value (#2748) @s4ke
+
+### 1.2.7: Maintenance Release
+
+Editor
+
+ - Ensure subflow-scoped config nodes do not get moved on import Fixes #2789
+ - Allow TypedInput to be disabled (#2752) @bartbutenaers
+ - Allow userMenu to be explicitly enabled (#2805) @tfmf
+ - Improvements to DE translation (#2192) @ketzu
+
+
+Runtime
+
+ - Handle `undefined` error passed to node.error (#2781) @johnwang71
+ - Disable nyc coverage reporting on older node versions
+ - Improve Editor API unit test coverage (#2777) @aaronmyatt
+
+
+Nodes
+
+ - Trigger: ensure timestamp option sends .now() at point of sending
+
+
+### 1.2.6: Maintenance Release
+
+
+Editor
+
+ - Update Japanese translations for 1.2.5 (#2764) @kazuhitoyokoi
+ - Library: properly handle symlinked folders (#2768) @natcl
+
+Runtime
+
+ - Support Windows paths when installing tarball by path name Fixes #2769
+ - Fix unsecure command usage in GH Action
+
+Nodes
+
+ - Update MQTT to latest to fix Node 8 URL breakage
+
+
+
+
+### 1.2.5: Maintenance Release
+
+Editor
+
+ - Fix import of config nodes with unknown z property
+
+Runtime
+
+ - Set ACTIONS_ALLOW_UNSECURE_COMMANDS in GH Action
+
+### 1.2.4: Maintenance Release
+
+Editor
+
+ - Support bigint types in Debug sidebar
+ - Clear retained status of deleted nodes
+ - Prevent needless retention of node status messages
+ - Update projects dialogs to use TypedInput-cred input
+ - Restore cursor position in TypedInput cred-mode
+ - Ensure config nodes with invalid z are imported somewhere
+ - Ensure user keyboard shortcuts override defaults Fixes #2753
+
+Runtime
+
+ - Disable projects when flowFile passed into grunt dev
+ - Add Russian Locale (#2761) (#2531) (@alexk111)
+ - Add Japanese translation for http-in node (#2758) (@kazuhitoyokoi)
+
+Nodes
+
+ - CSV: Fix CSV node repeating array output
+
+### 1.2.3: Maintenance Release
+
+Editor
+
+ - Disable 'use strict' checking in Function node Fixes #2743
+ - Add gray/grey alternate options for status
+ - Handle import errors on initial load and report to user
+ - Only apply recovery tab on initial load Fixes #2731
+ - Reinstate coveralls reporting to travis build
+ - Update Japanese message catalogue for 1.2.3 release #2747 (@HiroyasuNishiyama)
+
+Runtime
+
+ - Modify default settings comment (#2739)
+ - Add mutex lock to saveSettings storage call Fixes #2736 (#2737)
+ - Migrate to nyc instead of istanbul for code coverage
+ - Move mosca to ui-test-dependencies
+ - Remove " from npm install prefix option
+
+### 1.2.2: Maintenance Release
+
+Editor
+
+ - Prevent node z property getting set to 0 or ""
+ - Only apply z-recovery logic to flow nodes
+ - Fix api call to reload flows Fixes #2726
+ - Remove bad z property from import config nodes
+
+### 1.2.1: Maintenance Release
+
+Runtime
+
+ - Fix race condition in .config file migration Fixes #2724
+
+
+### 1.2.0: Milestone Release
+
+Editor
+
+ - Fix selection of link node not existing within active workspace #2722 (@HiroyasuNishiyama)
+ - Fix import of merged flow
+ - Fix width of upload button in Safari #2718 (@HiroyasuNishiyama)
+ - Update Chinese translations #2719 (@JiyeYu)
+ - Update Japanese translations needed for 1.2 #2710 (@kazuhitoyokoi)
+ - Fix unexpected line break of sidebar tab name popover #2716 (@HiroyasuNishiyama)
+ - i18n module refresh tooltip #2717 (@HiroyasuNishiyama)
+ - Add better error message if context file gets corrupted
+ - Update info text of function node #2714 (@HiroyasuNishiyama)
+ - Use markdown editor if editText called with md mode
+ - Prevent group actions when in non-default mouse mode
+
+### 1.2.0-beta.1: Beta Release
+
+Editor
+
+ - Detect importing duplicate nodes and help user resolve #2698
+ - Allow sidebar tabs to be reordered #2655
+ - Add tgz upload button to palette manager #2682
+ - Add 'automatic' git workflow for projects #2035
+ - Allow project version string to be edited
+ - Sanitize unknown node type when displaying
+ - Handle nodes with invalid z property Closes #2170
+ - Outline: Ensure sf instance nodes update in outliner when import-replace sf
+ - Outline: Ensure recovered nodes tab is added to outliner properly
+ - Groups: Only recalculate group label offsets when needed
+ - Groups: Reuse first group name/style when merging elements Fixes #2680
+ - Groups: Fix copy/paste of node into active group Fixes #2686
+ - ACE: Update ACE to 1.4.12-src-min-noconflict Fixes #1988
+ - ACE: Add comment highlighting to JSONata and fix regex handling Closes #2701
+ - ACE: Ensure errors in ACE NRJavaScript mode are on valid lines
+ - Prevent Enter on search box from reloading page Fixes #2678
+ - Allow toggleButton icons to be optional
+ - Allow treeList to have a header component
+ - Disable selection of FA icons when dbl clicking node
+
+Runtime
+
+ - Add RED.hooks API for pluggable routing #2665
+ - Add flows:* events and deprecate nodes-* events
+ - Split .config.json into separate files #2794
+ - Add support for file upload in /nodes api #2682
+ - Add 'done' metric log for message tracing #2685 (@k-toumura)
+ - Add mutex locking around /flow apis #2679
+ - Default flowFilePretty to true if projects enabled
+ - Replace Math.random with crypto.getBytes for session tokens
+ - Fix `this` context when calling multiple event listeners Fixes #2692. #2693 (@mgroenhoff)
+ - Add --userDir=/tmp/foo support to grunt dev
+ - Skip loading node html if disableEditor set #2684
+ - Update util.writeFile to write to tmp file before rename #2683
+ - Fix getModuleFiles function to include path property #2705 (@t-kawamorita)
+ - Update nodemon to latest so grunt dev task behaves
+ - Improve jsdoc of util.getObjectProperty to clarify thrown error See #2703
+
+Nodes
+
+ - Trigger: allow msg.delay to be used to set delay/loop interval #2707
+ - Function: allow to send & log in its initialize code #2644 (@cinhcet)
+ - MQTT: Update to MQTT 4.2.1 Closes #2694
+ - Debug: Handle undefined value in Debug view of Array and Object Fixes #2696
+ - Switch: Clarify empty rules in switch node documentation #2649 (@natcl) #2669 (@kazuhitoyokoi)
+ - Updated core nodes to use Done callback #2653 (@k-toumura)
+     - yaml,  xml, json, html, http, template, range, link, status, catch, complete, inject
+
+### 1.1.3: Maintenance Release
+
+Editor
+ - Fix vertical align of fa node icons Fixes #2670
+ - Allow lasso selection to be restricted to active group
+ - Make ctrl-click on nested group more intuitive
+ - Fix copy/paste of nested groups
+ - Add Set(iterable) polyfill for IE11
+ - Support select-all inside active group
+ - Improve performance of moving groups
+ - Add additional check for git auth failure response Fixes #2656
+ - german translation, wording (#2660) (#2666)
+ - Remove filtering of duplicate fa icons
+ - Show node help when switching node edit dialogs Fixes #2652
+ - Ensure group theme picks up theme defaults properly Fixes #2651
+
+Nodes
+ - Clarify Switch node isEmpty help
+ - HTTP In: handle application/cbor as binary
+
+Runtime
+ - Move runtime settings back to adminApi from editorApi Fixes #2662
+ - Update Chinese message for debug node
+
 ### 1.1.2: Maintenance Release
 
 Editor

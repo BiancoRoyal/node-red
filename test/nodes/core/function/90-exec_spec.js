@@ -37,14 +37,24 @@ describe('exec node', function() {
     it('should be loaded with any defaults', function(done) {
         var flow = [{id:"n1", type:"exec", name: "exec1"}];
         helper.load(execNode, flow, function() {
-            var n1 = helper.getNode("n1");
-            n1.should.have.property("name", "exec1");
-            n1.should.have.property("cmd", "");
-            n1.should.have.property("append", "");
-            n1.should.have.property("addpay",true);
-            n1.should.have.property("timer",0);
-            n1.should.have.property("oldrc","false");
-            done();
+            try {
+                var n1 = helper.getNode("n1");
+                n1.should.have.property("name", "exec1");
+                n1.should.have.property("cmd", "");
+                n1.should.have.property("append", "");
+                n1.should.have.property("addpay","payload");
+                n1.should.have.property("timer",0);
+                n1.should.have.property("oldrc","false");
+                n1.should.have.property("execOpt");
+                n1.execOpt.should.have.property("encoding", 'binary');
+                n1.execOpt.should.have.property("maxBuffer", 10000000);
+                n1.execOpt.should.have.property("windowsHide", false);
+                n1.should.have.property("spawnOpt");
+                n1.spawnOpt.should.have.property("windowsHide", false);
+                done();
+            } catch(err) {
+                done(err);
+            }
         });
     });
 
@@ -53,7 +63,7 @@ describe('exec node', function() {
         it('should exec a simple command', function(done) {
             var flow = [{id:"n1",type:"exec",wires:[["n2"],["n3"],["n4"]],command:"echo", addpay:false, append:"", oldrc:"false"},
                         {id:"n2", type:"helper"},{id:"n3", type:"helper"},{id:"n4", type:"helper"}];
-            var spy = sinon.stub(child_process, 'exec',
+            var spy = sinon.stub(child_process, 'exec').callsFake(
             function(arg1, arg2, arg3, arg4) {
                 // arg3(error,stdout,stderr);
                 arg3(null,arg1,arg1.toUpperCase());
@@ -114,10 +124,30 @@ describe('exec node', function() {
             });
         });
 
+        it('should exec a simple command with appended value from message', function (done) {
+            var flow = [{id:"n1", type:"exec", wires:[["n2"]], command:"echo", addpay:"topic", append:"more", oldrc:"false"},
+                        {id:"n2", type:"helper"}];
+            helper.load(execNode, flow, function () {
+                var n1 = helper.getNode("n1");
+                var n2 = helper.getNode("n2");
+                n2.on("input", function (msg) {
+                    try {
+                        msg.should.have.property("payload");
+                        msg.payload.should.be.a.String();
+                        msg.payload.should.equal("bar more\n");
+                        done();
+                    } catch(err) {
+                        done(err)
+                    }
+                });
+                n1.receive({payload:"foo", topic:"bar"});
+            });
+        });
+
         it('should exec a simple command with extra parameters', function(done) {
-            var flow = [{id:"n1",type:"exec",wires:[["n2"],["n3"],["n4"]],command:"echo", addpay:true, append:"more", oldrc:"false"},
+            var flow = [{id:"n1",type:"exec",wires:[["n2"],["n3"],["n4"]],command:"echo", addpay:"payload", append:"more", oldrc:"false"},
                         {id:"n2", type:"helper"},{id:"n3", type:"helper"},{id:"n4", type:"helper"}];
-            var spy = sinon.stub(child_process, 'exec',
+            var spy = sinon.stub(child_process, 'exec').callsFake(
                 function(arg1, arg2, arg3, arg4) {
                     //console.log(arg1);
                     // arg3(error,stdout,stderr);
@@ -173,7 +203,7 @@ describe('exec node', function() {
         it('should be able to return a binary buffer', function(done) {
             var flow = [{id:"n1",type:"exec",wires:[["n2"],["n3"],["n4"]],command:"echo", addpay:true, append:"more", oldrc:"false"},
                         {id:"n2", type:"helper"},{id:"n3", type:"helper"},{id:"n4", type:"helper"}];
-            var spy = sinon.stub(child_process, 'exec',
+            var spy = sinon.stub(child_process, 'exec').callsFake(
                 function(arg1, arg2, arg3, arg4) {
                     //console.log(arg1);
                     // arg3(error,stdout,stderr);
@@ -305,7 +335,7 @@ describe('exec node', function() {
         it('should return the rc for a failing command', function(done) {
             var flow = [{id:"n1",type:"exec",wires:[["n2"],["n3"],["n4"]],command:"error", addpay:false, append:"", oldrc:"false"},
                         {id:"n2", type:"helper"},{id:"n3", type:"helper"},{id:"n4", type:"helper"}];
-            var spy = sinon.stub(child_process, 'exec',
+            var spy = sinon.stub(child_process, 'exec').callsFake(
             function(arg1, arg2, arg3, arg4) {
                 //console.log(arg1);
                 // arg3(error,stdout,stderr);
@@ -368,7 +398,7 @@ describe('exec node', function() {
         it('should preserve existing properties on msg object', function(done) {
             var flow = [{id:"n1",type:"exec",wires:[["n2"],["n3"],["n4"]],command:"echo", addpay:false, append:"", oldrc:"false"},
                         {id:"n2", type:"helper"},{id:"n3", type:"helper"},{id:"n4", type:"helper"}];
-            var spy = sinon.stub(child_process, 'exec',
+            var spy = sinon.stub(child_process, 'exec').callsFake(
             function(arg1, arg2, arg3, arg4) {
                 // arg3(error,stdout,stderr);
                 arg3(null,arg1,arg1.toUpperCase());
@@ -435,7 +465,7 @@ describe('exec node', function() {
         it('should preserve existing properties on msg object for a failing command', function(done) {
             var flow = [{id:"n1",type:"exec",wires:[["n2"],["n3"],["n4"]],command:"error", addpay:false, append:"", oldrc:"false"},
                         {id:"n2", type:"helper"},{id:"n3", type:"helper"},{id:"n4", type:"helper"}];
-            var spy = sinon.stub(child_process, 'exec',
+            var spy = sinon.stub(child_process, 'exec').callsFake(
             function(arg1, arg2, arg3, arg4) {
                 // arg3(error,stdout,stderr);
                 arg3({code: 1},arg1,arg1.toUpperCase());
@@ -521,13 +551,17 @@ describe('exec node', function() {
                 var n2 = helper.getNode("n2");
                 var n3 = helper.getNode("n3");
                 var n4 = helper.getNode("n4");
+                var payload = "";
                 n2.on("input", function(msg) {
                     //console.log(msg);
                     try {
                         msg.should.have.property("payload");
                         msg.payload.should.be.a.String();
-                        msg.payload.should.equal(expected);
-                        done();
+                        payload += msg.payload;
+                        if (payload.endsWith("\n")) {
+                            payload.should.equal(expected);
+                            done();
+                        }
                     }
                     catch(err) { done(err); }
                 });
@@ -547,6 +581,7 @@ describe('exec node', function() {
                         {id:"n2", type:"helper"},{id:"n3", type:"helper"},{id:"n4", type:"helper"}];
                 expected = "12345 deg C\n";
             }
+            var payload = "";
 
             helper.load(execNode, flow, function() {
                 var n1 = helper.getNode("n1");
@@ -558,8 +593,11 @@ describe('exec node', function() {
                     try {
                         msg.should.have.property("payload");
                         msg.payload.should.be.a.String();
-                        msg.payload.should.equal(expected);
-                        done();
+                        payload += msg.payload;
+                        if (payload.endsWith("\n")) {
+                            payload.should.equal(expected);
+                            done();
+                        }
                     }
                     catch(err) { done(err); }
                 });
@@ -641,8 +679,16 @@ describe('exec node', function() {
                 };
 
                 n2.on("input", function(msg) {
-                    messages[0] = msg;
-                    completeTest();
+                    var payload = msg.payload;
+                    if (messages[0]) {
+                        messages[0].payload += payload;
+                    }
+                    else {
+                        messages[0] = msg;
+                    }
+                    if (payload.endsWith("\n")) {
+                        completeTest();
+                    }
                 });
                 n4.on("input", function(msg) {
                     messages[1] = msg;
@@ -849,8 +895,16 @@ describe('exec node', function() {
                 };
 
                 n2.on("input", function(msg) {
-                    messages[0] = msg;
-                    completeTest();
+                    var payload = msg.payload;
+                    if (messages[0]) {
+                        messages[0].payload += payload;
+                    }
+                    else {
+                        messages[0] = msg;
+                    }
+                    if (payload.endsWith("\n")) {
+                        completeTest();
+                    }
                 });
                 n4.on("input", function(msg) {
                     messages[1] = msg;

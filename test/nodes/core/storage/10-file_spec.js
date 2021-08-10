@@ -14,7 +14,6 @@
  * limitations under the License.
  **/
 
-var should = require("should");
 var path = require('path');
 var fs = require('fs-extra');
 var os = require('os');
@@ -22,6 +21,7 @@ var sinon = require("sinon");
 var iconv = require("iconv-lite");
 var fileNode = require("nr-test-utils").require("@node-red/nodes/core/storage/10-file.js");
 var helper = require("node-red-node-test-helper");
+var RED = require("nr-test-utils").require("node-red/lib/red");
 
 describe('file Nodes', function() {
 
@@ -41,8 +41,9 @@ describe('file Nodes', function() {
 
     describe('file out Node', function() {
 
+        var relativePathToFile = "50-file-test-file.txt";
         var resourcesDir = path.join(__dirname,"..","..","..","resources");
-        var fileToTest = path.join(resourcesDir,"50-file-test-file.txt");
+        var fileToTest = path.join(resourcesDir,relativePathToFile);
         var wait = 250;
 
         beforeEach(function(done) {
@@ -51,6 +52,7 @@ describe('file Nodes', function() {
         });
 
         afterEach(function(done) {
+            delete RED.settings.fileWorkingDirectory;
             fs.removeSync(path.join(resourcesDir,"file-out-node"));
             helper.unload().then(function() {
                 //fs.unlinkSync(fileToTest);
@@ -93,6 +95,30 @@ describe('file Nodes', function() {
                 n1.receive({payload:"test"});
             });
         });
+
+        it('should write to a file using RED.settings.fileWorkingDirectory', function(done) {
+            var flow = [{id:"fileNode1", type:"file", name: "fileNode", "filename":relativePathToFile, "appendNewline":false, "overwriteFile":true, wires: [["helperNode1"]]},
+                        {id:"helperNode1", type:"helper"}];
+            helper.load(fileNode, flow, function() {
+                RED.settings.fileWorkingDirectory = resourcesDir;
+                var n1 = helper.getNode("fileNode1");
+                var n2 = helper.getNode("helperNode1");
+                n2.on("input", function(msg) {
+                    try {
+                        var f = fs.readFileSync(fileToTest);
+                        f.should.have.length(4);
+                        fs.unlinkSync(fileToTest);
+                        msg.should.have.property("payload", "test");
+                        done();
+                    }
+                    catch (e) {
+                        done(e);
+                    }
+                });
+                n1.receive({payload:"test"});
+            });
+        });
+
 
         it('should write multi-byte string to a file', function(done) {
             var flow = [{id:"fileNode1", type:"file", name: "fileNode", "filename":fileToTest, "appendNewline":false, "overwriteFile":true, wires: [["helperNode1"]]},
@@ -391,7 +417,7 @@ describe('file Nodes', function() {
 
         it('should fail to write to a ro file', function(done) {
             // Stub file write so we can make writes fail
-            var spy = sinon.stub(fs, 'createWriteStream', function(arg1,arg2) {
+            var spy = sinon.stub(fs, 'createWriteStream').callsFake(function(arg1,arg2) {
                 var ws = {};
                 ws.on = function(e,d) { throw("Stub error message"); }
                 ws.write = function(e,d) { }
@@ -421,7 +447,7 @@ describe('file Nodes', function() {
 
         it('should fail to append to a ro file', function(done) {
             // Stub file write so we can make writes fail
-            var spy = sinon.stub(fs, 'createWriteStream', function(arg1,arg2) {
+            var spy = sinon.stub(fs, 'createWriteStream').callsFake(function(arg1,arg2) {
                 var ws = {};
                 ws.on = function(e,d) { throw("Stub error message"); }
                 ws.write = function(e,d) { }
@@ -451,7 +477,7 @@ describe('file Nodes', function() {
 
         it('should cope with failing to delete a file', function(done) {
             // Stub file write so we can make writes fail
-            var spy = sinon.stub(fs, 'unlink', function(arg,arg2) { arg2(new Error("Stub error message")); });
+            var spy = sinon.stub(fs, 'unlink').callsFake(function(arg,arg2) { arg2(new Error("Stub error message")); });
 
             var flow = [{id:"fileNode1", type:"file", name: "fileNode", "filename":fileToTest, "appendNewline":true, "overwriteFile":"delete"}];
             helper.load(fileNode, flow, function() {
@@ -477,7 +503,7 @@ describe('file Nodes', function() {
         it('should fail to create a new directory if not asked to do so (append)', function(done) {
             // Stub file write so we can make writes fail
             var fileToTest2 = path.join(resourcesDir,"file-out-node","50-file-test-file.txt");
-            //var spy = sinon.stub(fs, 'appendFile', function(arg,arg2,arg3,arg4){ arg4(new Error("Stub error message")); });
+            //var spy = sinon.stub(fs, 'appendFile').callsFake(function(arg,arg2,arg3,arg4){ arg4(new Error("Stub error message")); });
 
             var flow = [{id:"fileNode1", type:"file", name: "fileNode", "filename":fileToTest2, "appendNewline":true, "overwriteFile":false}];
             helper.load(fileNode, flow, function() {
@@ -508,7 +534,7 @@ describe('file Nodes', function() {
             }
             // Stub file write so we can make writes fail
             var fileToTest2 = path.join(resourcesDir,"file-out-node","50-file-test-file.txt");
-            var spy = sinon.stub(fs, "ensureDir", function(arg1,arg2,arg3,arg4) { arg2(null); });
+            var spy = sinon.stub(fs, "ensureDir").callsFake(function(arg1,arg2,arg3,arg4) { arg2(null); });
             var flow = [{id:"fileNode1", type:"file", name: "fileNode", "filename":fileToTest2, "appendNewline":true, "overwriteFile":false, "createDir":true}];
             helper.load(fileNode, flow, function() {
                 var n1 = helper.getNode("fileNode1");
@@ -531,7 +557,7 @@ describe('file Nodes', function() {
         it('should fail to create a new directory if not asked to do so (overwrite)', function(done) {
             // Stub file write so we can make writes fail
             var fileToTest2 = path.join(resourcesDir,"file-out-node","50-file-test-file.txt");
-            //var spy = sinon.stub(fs, 'appendFile', function(arg,arg2,arg3,arg4){ arg4(new Error("Stub error message")); });
+            //var spy = sinon.stub(fs, 'appendFile').callsFake(function(arg,arg2,arg3,arg4){ arg4(new Error("Stub error message")); });
 
             var flow = [{id:"fileNode1", type:"file", name: "fileNode", "filename":fileToTest2, "appendNewline":false, "overwriteFile":true}];
             helper.load(fileNode, flow, function() {
@@ -557,7 +583,7 @@ describe('file Nodes', function() {
         it('should try to create a new directory if asked to do so (overwrite)', function(done) {
             // Stub file write so we can make writes fail
             var fileToTest2 = path.join(resourcesDir,"file-out-node","50-file-test-file.txt");
-            var spy = sinon.stub(fs, "ensureDir", function(arg1,arg2,arg3,arg4) { arg2(null); });
+            var spy = sinon.stub(fs, "ensureDir").callsFake(function(arg1,arg2,arg3,arg4) { arg2(null); });
 
             var flow = [{id:"fileNode1", type:"file", name: "fileNode", "filename":fileToTest2, "appendNewline":true, "overwriteFile":true, "createDir":true}];
             helper.load(fileNode, flow, function() {
@@ -1036,9 +1062,10 @@ describe('file Nodes', function() {
 
     describe('file in Node', function() {
 
+        var relativePathToFile = "50-file-test-file.txt";
         var resourcesDir = path.join(__dirname,"..","..","..","resources");
-        var fileToTest = path.join(resourcesDir,"50-file-test-file.txt");
-        var fileToTest2 = "\t"+path.join(resourcesDir,"50-file-test-file.txt")+"\r\n";
+        var fileToTest = path.join(resourcesDir,relativePathToFile);
+        var fileToTest2 = "\t"+path.join(resourcesDir,relativePathToFile)+"\r\n";
         var wait = 150;
 
         beforeEach(function(done) {
@@ -1047,6 +1074,7 @@ describe('file Nodes', function() {
         });
 
         afterEach(function(done) {
+            delete RED.settings.fileWorkingDirectory;
             helper.unload().then(function() {
                 fs.unlinkSync(fileToTest);
                 helper.stopServer(done);
@@ -1100,6 +1128,30 @@ describe('file Nodes', function() {
             });
         });
 
+
+        it('should read in a file using fileWorkingDirectory to set cwd', function(done) {
+            var flow = [{id:"fileInNode1", type:"file in", name: "fileInNode", "filename":relativePathToFile, "format":"utf8", wires:[["n2"]]},
+                        {id:"n2", type:"helper"}];
+            helper.load(fileNode, flow, function() {
+                RED.settings.fileWorkingDirectory = resourcesDir;
+                var n1 = helper.getNode("fileInNode1");
+                var n2 = helper.getNode("n2");
+                n2.on("input", function(msg) {
+                    try {
+                        msg.should.have.property('payload');
+                        msg.payload.should.be.a.String();
+                        msg.payload.should.have.length(40)
+                        msg.payload.should.equal("File message line 1\nFile message line 2\n");
+                        done();
+                    } catch(err) {
+                        done(err);
+                    }
+                });
+                n1.receive({payload:""});
+            });
+        });
+
+
         it('should read in a file ending in cr and output a utf8 string', function(done) {
             var flow = [{id:"fileInNode1", type:"file in", name: "fileInNode", "filename":fileToTest2, "format":"utf8", wires:[["n2"]]},
                 {id:"n2", type:"helper"}];
@@ -1131,6 +1183,9 @@ describe('file Nodes', function() {
                 n2.on("input", function(msg) {
                     try {
                         msg.should.have.property('payload');
+                        msg.should.have.property('topic');
+                        msg.should.not.have.property('foo');
+                        msg.should.not.have.property('bar');
                         msg.payload.should.be.a.String();
                         msg.should.have.property('parts');
                         msg.parts.should.have.property('index',c);
@@ -1152,7 +1207,7 @@ describe('file Nodes', function() {
                         done(e);
                     }
                 });
-                n1.receive({payload:""});
+                n1.receive({payload:"",topic:"A",foo:"bar",bar:"foo"});
             });
         });
 
@@ -1189,6 +1244,45 @@ describe('file Nodes', function() {
                     }
                 });
                 n1.receive({payload:""});
+            });
+        });
+
+        it('should read in a file and output split lines with parts and extra props', function(done) {
+            var flow = [{id:"fileInNode1", type:"file in", name: "fileInNode", filename:fileToTest, format:"lines", allProps:true, wires:[["n2"]]},
+                        {id:"n2", type:"helper"}];
+            helper.load(fileNode, flow, function() {
+                var n1 = helper.getNode("fileInNode1");
+                var n2 = helper.getNode("n2");
+                var c = 0;
+                n2.on("input", function(msg) {
+                    // console.log(msg)
+                    try {
+                        msg.should.have.property('payload');
+                        msg.payload.should.be.a.String();
+                        msg.should.have.property('topic');
+                        msg.should.have.property('foo');
+                        msg.should.have.property('bar');
+                        msg.should.have.property('parts');
+                        msg.parts.should.have.property('index',c);
+                        msg.parts.should.have.property('type','string');
+                        msg.parts.should.have.property('ch','\n');
+                        if (c === 0) {
+                            msg.payload.should.equal("File message line 1");
+                        }
+                        if (c === 1) {
+                            msg.payload.should.equal("File message line 2");
+                        }
+                        if (c === 2) {
+                            msg.payload.should.equal("");
+                            done();
+                        }
+                        c++;
+                    }
+                    catch(e) {
+                        done(e);
+                    }
+                });
+                n1.receive({payload:"",topic:"B",foo:"bar",bar:"foo"});
             });
         });
 
