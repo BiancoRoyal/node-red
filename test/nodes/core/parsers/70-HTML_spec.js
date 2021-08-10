@@ -60,11 +60,17 @@ describe('HTML node', function() {
                 var n1 = helper.getNode("n1");
                 var n2 = helper.getNode("n2");
                 n2.on("input", function(msg) {
-                    msg.should.have.property('topic', 'bar');
-                    should.equal(msg.payload, 'This is a test page for node 70-HTML');
-                    done();
+                    try {
+                        msg.should.have.property('topic', 'bar');
+                        should.equal(msg.payload, 'This is a test page for node 70-HTML');
+                        done();
+                    } catch(err) {
+                        done(err)
+                    }
                 });
-                n1.receive({payload:data,topic:"bar",select:"h1"});
+                // include 'body' in the select to verify we're in document mode
+                // for the parser. See https://github.com/node-red/node-red/issues/3079
+                n1.receive({payload:data,topic:"bar",select:"body h1"});
             });
         });
     });
@@ -78,9 +84,13 @@ describe('HTML node', function() {
                 var n1 = helper.getNode("n1");
                 var n2 = helper.getNode("n2");
                 n2.on("input", function(msg) {
-                    msg.should.have.property('topic', 'bar');
-                    msg.foo[0].should.equal('This is a test page for node 70-HTML');
-                    done();
+                    try {
+                        msg.should.have.property('topic', 'bar');
+                        msg.foo[0].should.equal('This is a test page for node 70-HTML');
+                        done();
+                    } catch(err) {
+                        done(err)
+                    }
                 });
                 n1.receive({foo:data,topic:"bar",select:"h1"});
             });
@@ -96,9 +106,13 @@ describe('HTML node', function() {
                 var n1 = helper.getNode("n1");
                 var n2 = helper.getNode("n2");
                 n2.on("input", function(msg) {
-                    msg.should.have.property('topic', 'bar');
-                    msg.bar[0].should.equal('This is a test page for node 70-HTML');
-                    done();
+                    try {
+                        msg.should.have.property('topic', 'bar');
+                        msg.bar[0].should.equal('This is a test page for node 70-HTML');
+                        done();
+                    } catch(err) {
+                        done(err)
+                    }
                 });
                 n1.receive({foo:data,topic:"bar"});
             });
@@ -114,10 +128,14 @@ describe('HTML node', function() {
                 var n1 = helper.getNode("n1");
                 var n2 = helper.getNode("n2");
                 n2.on("input", function(msg) {
-                    msg.should.have.property('topic', 'bar');
-                    msg.should.have.property('payload');
-                    msg.payload.should.be.empty;
-                    done();
+                    try {
+                        msg.should.have.property('topic', 'bar');
+                        msg.should.have.property('payload');
+                        msg.payload.should.be.empty;
+                        done();
+                    } catch(err) {
+                        done(err)
+                    }
                 });
                 n1.receive({payload:data,topic:"bar",select:"h4"});
             });
@@ -133,9 +151,13 @@ describe('HTML node', function() {
                 var n1 = helper.getNode("n1");
                 var n2 = helper.getNode("n2");
                 n2.on("input", function(msg) {
-                    msg.should.have.property('topic', 'bar');
-                    should.equal(msg.payload, 'There\'s nothing to read here.');
-                    done();
+                    try {
+                        msg.should.have.property('topic', 'bar');
+                        should.equal(msg.payload, 'There\'s nothing to read here.');
+                        done();
+                    } catch(err) {
+                        done(err)
+                    }
                 });
                 n1.receive({payload:data,topic: "bar"});
             });
@@ -151,10 +173,14 @@ describe('HTML node', function() {
                 var n1 = helper.getNode("n1");
                 var n2 = helper.getNode("n2");
                 n2.on("input", function(msg) {
-                    msg.should.have.property('topic', 'bar');
-                    msg.payload[0].indexOf("<li>Blue</li>").should.be.above(-1);
-                    msg.payload[0].indexOf("<li>Red</li>").should.be.above(-1);
-                    done();
+                    try {
+                        msg.should.have.property('topic', 'bar');
+                        msg.payload[0].indexOf("<li>Blue</li>").should.be.above(-1);
+                        msg.payload[0].indexOf("<li>Red</li>").should.be.above(-1);
+                        done();
+                    } catch(err) {
+                        done(err)
+                    }
                 });
                 n1.receive({payload:data,topic: "bar"});
             });
@@ -170,11 +196,14 @@ describe('HTML node', function() {
                 var n1 = helper.getNode("n1");
                 var n2 = helper.getNode("n2");
                 n2.on("input", function(msg) {
-                    msg.should.have.property('topic', 'bar');
-                    msg.payload[0].indexOf("Blue").should.be.above(-1);
-                    msg.payload[0].indexOf("Red").should.be.above(-1);
-                    done();
-
+                    try {
+                        msg.should.have.property('topic', 'bar');
+                        msg.payload[0].indexOf("Blue").should.be.above(-1);
+                        msg.payload[0].indexOf("Red").should.be.above(-1);
+                        done();
+                    } catch(err) {
+                        done(err)
+                    }
                 });
                 n1.receive({payload:data,topic: "bar"});
             });
@@ -190,9 +219,13 @@ describe('HTML node', function() {
                 var n1 = helper.getNode("n1");
                 var n2 = helper.getNode("n2");
                 n2.on("input", function(msg) {
-                    msg.should.have.property('topic', 'bar');
-                    should.equal(msg.payload, '<img src="foo.png"/>');
-                    done();
+                    try {
+                        msg.should.have.property('topic', 'bar');
+                        should.equal(msg.payload, '<img src="foo.png"/>');
+                        done();
+                    } catch(err) {
+                        done(err)
+                    }
                 });
                 n1.receive({payload:data,topic: "bar"});
             });
@@ -208,10 +241,14 @@ describe('HTML node', function() {
                 var n1 = helper.getNode("n1");
                 var n2 = helper.getNode("n2");
                 n2.on("input", function(msg) {
-                    msg.should.have.property('payload');
-                    msg.payload[0].should.have.property('src','foo.png');
-                    msg.should.have.property('topic', 'bar');
-                    done();
+                    try {
+                        msg.should.have.property('payload');
+                        msg.payload[0].should.have.property('src','foo.png');
+                        msg.should.have.property('topic', 'bar');
+                        done();
+                    } catch(err) {
+                        done(err)
+                    }
                 });
                 n1.receive({payload:data,topic: "bar"});
             });
@@ -258,9 +295,13 @@ describe('HTML node', function() {
                 var n1 = helper.getNode("n1");
                 var n2 = helper.getNode("n2");
                 n2.on("input", function(msg) {
-                    msg.should.have.property('topic', 'bar');
-                    msg.should.not.have.property('payload');
-                    done();
+                    try {
+                        msg.should.have.property('topic', 'bar');
+                        msg.should.not.have.property('payload');
+                        done();
+                    } catch(err) {
+                        done(err)
+                    }
                 });
                 n1.receive({topic: "bar"});
             });
@@ -301,20 +342,25 @@ describe('HTML node', function() {
                     var n1 = helper.getNode("n1");
                     var n2 = helper.getNode("n2");
                     n2.on("input", function(msg) {
-                        cnt++;
-                        msg.should.have.property('topic', 'bar');
-                        check_parts(msg, cnt -1, 2);
-                        if (cnt !== 1 && cnt !== 2) {
-                            return false;
+                        try {
+                            cnt++;
+                            msg.should.have.property('topic', 'bar');
+                            check_parts(msg, cnt -1, 2);
+                            if (cnt !== 1 && cnt !== 2) {
+                                return false;
+                            }
+                            if (cnt === 1) {
+                                msg.payload.indexOf("<li>Apple</li>").should.be.above(-1);
+                                msg.payload.indexOf("<li>Pear</li>").should.be.above(-1);
+                            } else if (cnt === 2) {
+                                msg.payload.indexOf("<li>Potato</li>").should.be.above(-1);
+                                msg.payload.indexOf("<li>Parsnip</li>").should.be.above(-1);
+                                done();
+                            }
+                        } catch(err) {
+                            done(err)
                         }
-                        if (cnt === 1) {
-                            msg.payload.indexOf("<li>Apple</li>").should.be.above(-1);
-                            msg.payload.indexOf("<li>Pear</li>").should.be.above(-1);
-                        } else if (cnt === 2) {
-                            msg.payload.indexOf("<li>Potato</li>").should.be.above(-1);
-                            msg.payload.indexOf("<li>Parsnip</li>").should.be.above(-1);
-                            done();
-                        }
+
                     });
                     n1.receive({payload:data,topic: "bar"});
                 });
@@ -331,19 +377,23 @@ describe('HTML node', function() {
                     var n1 = helper.getNode("n1");
                     var n2 = helper.getNode("n2");
                     n2.on("input", function(msg) {
-                        cnt++;
-                        msg.should.have.property('topic', 'bar');
-                        check_parts(msg, cnt -1, 2);
-                        if (cnt !== 1 && cnt !== 2) {
-                            return false;
-                        }
-                        if (cnt === 1) {
-                            msg.foo.indexOf("<li>Apple</li>").should.be.above(-1);
-                            msg.foo.indexOf("<li>Pear</li>").should.be.above(-1);
-                        } else if (cnt === 2) {
-                            msg.foo.indexOf("<li>Potato</li>").should.be.above(-1);
-                            msg.foo.indexOf("<li>Parsnip</li>").should.be.above(-1);
-                            done();
+                        try {
+                            cnt++;
+                            msg.should.have.property('topic', 'bar');
+                            check_parts(msg, cnt -1, 2);
+                            if (cnt !== 1 && cnt !== 2) {
+                                return false;
+                            }
+                            if (cnt === 1) {
+                                msg.foo.indexOf("<li>Apple</li>").should.be.above(-1);
+                                msg.foo.indexOf("<li>Pear</li>").should.be.above(-1);
+                            } else if (cnt === 2) {
+                                msg.foo.indexOf("<li>Potato</li>").should.be.above(-1);
+                                msg.foo.indexOf("<li>Parsnip</li>").should.be.above(-1);
+                                done();
+                            }
+                        } catch(err) {
+                            done(err)
                         }
                     });
                     n1.receive({foo:data, topic:"bar"});
@@ -360,19 +410,23 @@ describe('HTML node', function() {
                     var n1 = helper.getNode("n1");
                     var n2 = helper.getNode("n2");
                     n2.on("input", function(msg) {
-                        cnt++;
-                        msg.should.have.property('topic', 'bar');
-                        check_parts(msg, cnt -1, 2);
-                        if (cnt !== 1 && cnt !== 2) {
-                            return false;
-                        }
-                        if (cnt === 1) {
-                            msg.payload.indexOf("Apple").should.be.above(-1);
-                            msg.payload.indexOf("Pear").should.be.above(-1);
-                        } else if (cnt === 2) {
-                            msg.payload.indexOf("Potato").should.be.above(-1);
-                            msg.payload.indexOf("Parsnip").should.be.above(-1);
-                            done();
+                        try {
+                            cnt++;
+                            msg.should.have.property('topic', 'bar');
+                            check_parts(msg, cnt -1, 2);
+                            if (cnt !== 1 && cnt !== 2) {
+                                return false;
+                            }
+                            if (cnt === 1) {
+                                msg.payload.indexOf("Apple").should.be.above(-1);
+                                msg.payload.indexOf("Pear").should.be.above(-1);
+                            } else if (cnt === 2) {
+                                msg.payload.indexOf("Potato").should.be.above(-1);
+                                msg.payload.indexOf("Parsnip").should.be.above(-1);
+                                done();
+                            }
+                        } catch(err) {
+                            done(err)
                         }
                     });
                     n1.receive({payload:data,topic: "bar"});
@@ -389,12 +443,16 @@ describe('HTML node', function() {
                     var n1 = helper.getNode("n1");
                     var n2 = helper.getNode("n2");
                     n2.on("input", function(msg) {
-                        msg.should.have.property('payload');
-                        msg.payload.should.have.property('src','foo.png');
-                        msg.should.have.property('topic', 'bar');
-                        check_parts(msg, 0, 1);
-                        cnt = 2;  // frig the answer as only one img tag
-                        done();
+                        try {
+                            msg.should.have.property('payload');
+                            msg.payload.should.have.property('src','foo.png');
+                            msg.should.have.property('topic', 'bar');
+                            check_parts(msg, 0, 1);
+                            cnt = 2;  // frig the answer as only one img tag
+                            done();
+                        } catch(err) {
+                            done(err)
+                        }
                     });
                     n1.receive({payload:data,topic: "bar"});
                 });
@@ -411,15 +469,19 @@ describe('HTML node', function() {
                     var n2 = helper.getNode("n2");
                     var prev_msg = undefined;
                     n2.on("input", function(msg) {
-                        cnt++;
-                        if (prev_msg == undefined) {
-                            prev_msg = msg;
-                        }
-                        else {
-                            msg.should.not.equal(prev_msg);
-                        }
-                        if (cnt == 2) {
-                            done();
+                        try {
+                            cnt++;
+                            if (prev_msg == undefined) {
+                                prev_msg = msg;
+                            }
+                            else {
+                                msg.should.not.equal(prev_msg);
+                            }
+                            if (cnt == 2) {
+                                done();
+                            }
+                        } catch(err) {
+                            done(err)
                         }
                     });
                     n1.receive({payload:data,topic: "bar"});

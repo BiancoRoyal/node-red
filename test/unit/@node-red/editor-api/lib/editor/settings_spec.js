@@ -29,10 +29,9 @@ var theme = NR_TEST_UTILS.require("@node-red/editor-api/lib/editor/theme");
 
 describe("api/editor/settings", function() {
     before(function() {
-        sinon.stub(theme,"settings",function() { return { existing: 123, test: 456 };});
+        sinon.stub(theme,"settings").callsFake(function() { return { existing: 123, test: 456 };});
         app = express();
         app.use(bodyParser.json());
-        app.get("/settings",info.runtimeSettings);
         app.get("/settings/user",function(req,res,next) {req.user = "fred"; next()}, info.userSettings);
         app.post("/settings/user",function(req,res,next) {req.user = "fred"; next()},info.updateUserSettings);
     });
@@ -41,31 +40,6 @@ describe("api/editor/settings", function() {
         theme.settings.restore();
     });
 
-    it('returns the runtime settings', function(done) {
-        info.init({
-            settings: {
-                getRuntimeSettings: function(opts) {
-                    return Promise.resolve({
-                        a:1,
-                        b:2,
-                        editorTheme: { existing: 789 }
-                    })
-                }
-            }
-        });
-        request(app)
-        .get("/settings")
-        .expect(200)
-        .end(function(err,res) {
-            if (err) {
-                return done(err);
-            }
-            res.body.should.have.property("a",1);
-            res.body.should.have.property("b",2);
-            res.body.should.have.property("editorTheme",{existing: 789, test:456});
-            done();
-        });
-    });
     it('returns the user settings', function(done) {
         info.init({
             settings: {

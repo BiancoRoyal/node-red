@@ -15,7 +15,6 @@
  **/
 
 var should = require("should");
-var when = require('when');
 var sinon = require('sinon');
 
 var NR_TEST_UTILS = require("nr-test-utils");
@@ -144,17 +143,21 @@ describe("api/auth/users", function() {
            Users.init({
                type:"credentials",
                users:function(username) {
-                   return when.resolve({'username':'dave','permissions':'read'});
+                   return Promise.resolve({'username':'dave','permissions':'read'});
                },
                authenticate: function(username,password) {
                    authUsername = username;
                    authPassword = password;
-                   return when.resolve({'username':'pete','permissions':'write'});
+                   return Promise.resolve({'username':'pete','permissions':'write'});
                }
            });
        });
 
         describe('#get',function() {
+            it("returns null for tokenHeader", function() {
+                should.not.exist(Users.tokenHeader());
+            });
+
             it('delegates get user',function(done) {
                 Users.get('dave').then(function(user) {
                     try {
