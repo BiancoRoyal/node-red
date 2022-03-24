@@ -60,9 +60,9 @@ describe('TCP Request Node', function() {
             n2.on("input", function(msg) {
                 try {
                     if (typeof val1 === 'object') {
-                        msg.should.have.properties(Object.assign({}, val1, {payload: Buffer(val1.payload)}));
+                        msg.should.have.properties(Object.assign({}, val1, {payload: Buffer.from(val1.payload)}));
                     } else {
-                        msg.should.have.property('payload', Buffer(val1));
+                        msg.should.have.property('payload', Buffer.from(val1));
                     }
                     done();
                 } catch(err) {
@@ -84,9 +84,17 @@ describe('TCP Request Node', function() {
             n2.on("input", msg => {
                 try {
                     if (typeof result === 'object') {
-                        msg.should.have.properties(Object.assign({}, result, {payload: Buffer(result.payload)}));
+                        if (flow[0].ret === "string") {
+                            msg.should.have.properties(Object.assign({}, result, {payload: result.payload}));
+                        } else {
+                            msg.should.have.properties(Object.assign({}, result, {payload: Buffer.from(result.payload)}));
+                        }
                     } else {
-                        msg.should.have.property('payload', Buffer(result));
+                        if (flow[0].ret === "string") {
+                            msg.should.have.property('payload', result);
+                        } else {
+                            msg.should.have.property('payload', Buffer.from(result));
+                        }
                     }
                     done();
                 } catch(err) {
@@ -245,10 +253,41 @@ describe('TCP Request Node', function() {
             }, done);
         });
 
+        it('should send & receive, then keep connection, and not split return strings', function(done) {
+            var flow = [{id:"n1", type:"tcp request", server:"localhost", port:port, out:"sit", ret:"string", newline:"", wires:[["n2"]] },
+                        {id:"n2", type:"helper"}];
+            testTCPMany(flow, [{
+                payload: "foo",
+                topic: 'boo'
+            }, {
+                payload: "bar<A>\nfoo",
+                topic: 'boo'
+            }], {
+                payload: "ACK:foobar<A>\nfoo",
+                topic: 'boo'
+            }, done);
+        });
+
+        it('should send & receive, then keep connection, and split return strings', function(done) {
+            var flow = [{id:"n1", type:"tcp request", server:"localhost", port:port, out:"sit", ret:"string", newline:"<A>\\n", wires:[["n2"]] },
+                        {id:"n2", type:"helper"}];
+            testTCPMany(flow, [{
+                payload: "foo",
+                topic: 'boo'
+            }, {
+                payload: "bar<A>\nfoo",
+                topic: 'boo'
+            }], {
+                payload: "ACK:foobar<A>",
+                topic: 'boo'
+            }, done);
+        });
+
         it('should send & recv data to/from server:port from msg', function(done) {
             var flow = [{id:"n1", type:"tcp request", server:"", port:"", out:"time", splitc: "0", wires:[["n2"]] },
                         {id:"n2", type:"helper"}];
-            testTCPMany(flow, [{
+            testTCPMany(flow, [
+                {
                     payload: "f",
                     host: "localhost",
                     port: port
