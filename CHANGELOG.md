@@ -1,227 +1,175 @@
-#### 3.0.0: Milestone Release
+#### 4.0.2: Maintenance Release
 
 Editor
 
- - Use theme page and header values if settings.js values are not present (#3767) @Steve-Mcl
- - Focus editor for undo after some actions in menu (#3759) @kazuhitoyokoi
- - Ensure node icon shade has properly rounded corners (#3763) @knolleary
- - Fix storing subflow credential type when input has multiple types (#3762) @knolleary
- - Ensure global-config and flow-config have info in the hierarchy popover (#3752) @Steve-Mcl
- - Include dirty state in history event (#3748) @Steve-Mcl
- - Fix display direction of context sub-menu (#3746) @knolleary
- - Fix clear pinned paths of debug sidebar menu (#3745) @HiroyasuNishiyama
- - prevent exception generating tooltip for deleted nodes (#3742) @Steve-Mcl
- - Fix context menu issues ready for v3 beta.5 (#3741) @Steve-Mcl
- - Do not generate new node-ids when pasting a cut flow (#3729) @knolleary
- - Fix to prevent node from moving out of workspace (#3731) @HiroyasuNishiyama
- - Don't let themes change disabled config node background color (#3736) @bonanitech
- - Move colors left behind in #3692 to CSS variables (#3737) @bonanitech
- - Fix handling of global debug message (#3733) @HiroyasuNishiyama
- - Fix label overflow @ config-node palette (#3730) @ralphwetzel
- - Fix defaulting to monaco if settings does not contain codeEditor (#3732) @knolleary
- - Disable keyboard shortcut mapping when showing Edit[..]Dialog (#3700) @ralphwetzel
- - Update add-junction menu to work in more cases (#3727) @knolleary
- - Ensure importMap is not null when using import UI (#3723) @Steve-Mcl
- - Add Japanese translations for v3.0-beta.4 (#3724) @kazuhitoyokoi
- - Fix "split with" on virtual links (#3766) @Steve-Mcl
+ - Use a more subtle border on the header (#4818) @bonanitech
+ - Improve the editor's French translations (#4824) @GogoVega
+ - Clean up orphaned editors (#4821) @Steve-Mcl
+ - Fix node validation if the property is not required (#4812) @GogoVega
+ - Ensure mermaid.min.js is cached properly between loads of the editor (#4817) @knolleary
 
 Runtime
 
- - Do not remove unknown credentials of Subflow Modules (#3728) @knolleary
- - Add missing entries from beta.4 changelog (#3721) @knolleary
+ - Allow auth cookie name to be customised (#4815) @knolleary
+ - Guard against undefined sessions in multiplayer (#4816) @knolleary
 
-Nodes
-
- - Change: Fix change node, not handling from field properly when using context (#3754) @Fadoli
- - Link Call: Fix linkcall registry bugs (#3751) @Steve-Mcl
- - WebSocket: Fix close timeout of websocket node (#3734) @HiroyasuNishiyama
-
-#### 3.0.0-beta.4: Beta Release
+#### 4.0.1: Maintenance Release
 
 Editor
 
- - Move all colours to CSS variables (#3692) @bonanitech
- - Fix clicking on node in workspace to hide context menu (#3696) @knolleary
- - Fix credential type input item of subflow template (#3703) @HiroyasuNishiyama
- - Add option flag `reimport` to `importNodes` (#3718) @Steve-Mcl
- - Update german translation (#3691) @Dennis14e
- - List welcome tours in help sidebar (#3717) @knolleary
- - Ensure 'hidden flow' count doesn't include subflows (#3715) @knolleary
- - Fix Chinese translate (#3706) @hotlong
- - Fix use default button for node icon (#3714) @kazuhitoyokoi
- - Fix select boxes vertical alignment (#3698) @bonanitech
- - Ensure workspace clean after undoing dropped node (#3708) @Steve-Mcl
- - Use solid colour as config node icon background to hide text overflow (#3710) @Steve-Mcl
- - Increase quick-add height to reveal 2 most recent entries (#3711) @Steve-Mcl
- - Set default editor to monaco in absence of user preference (#3702) @knolleary
- - Add Japanese translations for v3.0-beta.3 (#3688) @kazuhitoyokoi
- - Fix handling of spacebar inside JSON visual editor (#3687) @knolleary
- - Fix menu padding to handle both icons and submenus (#3686) @knolleary
- - Include scroll offset when positioning quick-add dialog (#3685) @knolleary
+ - Ensure subflow instance credential property values are extracted (#4802) @knolleary
+ - Use `_ADD_` value for both `add new...` and `none` options (#4800) @GogoVega
+ - Fix the config node select value assignment (#4788) @GogoVega
+ - Add tooltip for number of subflow instance on info tab (#4786) @kazuhitoyokoi
+ - Add Japanese translations for v4.0.0 (#4785) @kazuhitoyokoi
 
 Runtime
 
- - Allow flows to be stopped and started manually (#3719) @knolleary
- - Import default export if node is a transpiled es module (#3669) @dschmidt
- - Leave Monaco theme commented out by default (#3704) @bonanitech
+ - Ensure group nodes are properly exported in /flow api (#4803) @knolleary
 
-Nodes
+ Nodes
 
- - CSV: Fix CSV node to handle when outputting text fields (#3716) @dceejay
- - Delay: Fix delay rate limit last timing when empty (#3709) @dceejay
- - Link: Ensure link-call cache is updated when link-in is modified (#3695) @Steve-Mcl
- - Join: Join node in reduce mode doesn't keep existing msg properties (#3670) @dceejay
- - Template: Add support for evalulating {{env.<var>}} within a template node (#3690) @cow0w
+ - Joins: make using msg.parts optional in join node (#4796) @dceejay
+ - HTTP Request: UI proxy should setup agents for both http_proxy and https_proxy (#4794) @Steve-Mcl
+ - HTTP Request: Remove default user agent (#4791) @Steve-Mcl
 
-#### 3.0.0-beta.3: Beta Release
+#### 4.0.0: Milestone Release
+
+This marks the next major release of Node-RED. The following changes represent
+those added since the last beta. Check the beta release details below for the complete
+list.
+
+Breaking Changes
+
+ - Node-RED now requires Node 18.x or later. At the time of release, we recommend
+   using Node 20.
 
 Editor
 
- - Add Right-Click content menu (#3678) @knolleary
- - Fix disable junction (#3671) @HiroyasuNishiyama
- - Add Japanese translations for v2.2.3 (#3672) @kazuhitoyokoi
- - Reset mouse state when switching tabs (#3643) @knolleary
- - Fix uncorrect fix of junction to subflow conversion (#3666) @HiroyasuNishiyama
- - Fix undoing junction to subflow (#3653) @HiroyasuNishiyama
- - Fix conversion of junction to subflow (#3652) @HiroyasuNishiyama
- - Fix to include junction to exported nodes (#3650) @HiroyasuNishiyama
- - Fix z-index value for shade to cover nodes in palette (#3649) @kazuhitoyokoi
- - Fix to extend escaped subflow category characters (#3647) @HiroyasuNishiyama
- - Fix to sanitize tab name (#3646) @HiroyasuNishiyama
- - Fix selector placement (#3644) @bonanitech
- - Add Japanese translations for v3.0-beta.2 (#3622) @kazuhitoyokoi
- - Fix new folder menu of save to library dialog (#3633) @HiroyasuNishiyama
- - Fix layer of palette node (#3638) @HiroyasuNishiyama
- - Fix to place a node dragged from palette within the workspace (#3637) @HiroyasuNishiyama
- - Fix typo in CSS (#3628) @bonanitech
- - Use the correct variable for the gutter text color (#3615) @bonanitech
+ - Add `httpStaticCors` (#4761) @knolleary
+ - Update dependencies (#4763) @knolleary
+ - Sync master to dev (#4756) @knolleary
+ - Add tooltip and message validation to `typedInput` (#4747) @GogoVega
+ - Replace bcrypt with @node-rs/bcrypt (#4744) @knolleary
+ - Export Nodes dialog refinement (#4746) @Steve-Mcl
 
-
-Runtime
-
- - Support loading node modules from `nodesdir` (#3676) @Steve-Mcl
- - fix buffer parse error message of evaluateNodeProperty (#3624) @HiroyasuNishiyama
-
-Nodes
-
- - File: Further simplify file node filename entry UX (v3) (#3677) @Steve-Mcl
- - Function: Fix initial cursor position of init/finalize tab of function node (#3674) @HiroyasuNishiyama
- - Function: Fix ESM module loading in Function node (#3645) @knolleary
- - Inject: Fix JSONata evaluation of inject button (#3632) @HiroyasuNishiyama
- - TCP: Dont delete TCP socket twice (#3630) @Steve-Mcl
- - MQTT Node: define noproxy variable (#3626) @Steve-Mcl
- - Debug: i18n debug sidebar node label (#3623) @HiroyasuNishiyama
-
-#### 3.0.0-beta.2: Beta Release
-
-**Migration from 2.x**
-
- - The 'slice wires' action has changed from Ctrl-RightMouseButton to Alt-LeftMouseButton
+#### 4.0.0-beta.4: Beta Release
 
 Editor
 
- - Rework Junctions to be more node like in their event handling (#3607) @knolleary
- - Change slicing / slice-junction operations over to mouse button 0 (Left Mouse Button) (#3609) @Steve-Mcl
- - Do not slice-junction link node wires (#3608) @knolleary
- - Handle many-to-one slicing of wires (#3604) @knolleary
- - Ensure ACE worker options are set (#3611) @Steve-Mcl
- - Remove duplicate history add of ungroup event (#3605) @knolleary
- - use text width instead of number of characters for deciding select fi… (#3603) @HiroyasuNishiyama
- - Update Japanese info of link call node reflecting update of English info (#3600) @HiroyasuNishiyama
- - Fix typedInput label not visible on themes (#3580) @bonanitech
- - Fix project switching when junctions are present (#3595) @Steve-Mcl
- - Fix junction: when wiring from a regular nodes INPUT, backwards to a junction (#3591) @Steve-Mcl
- - Fix error initialising flow tab editor (#3585) @Steve-Mcl
- - Add Japanese translations for v3.0-beta.1 (#3576) @kazuhitoyokoi
- - Fix image paths where `red/image/typedInput/XXXX.png` should be `red/image/typedInput/XXXX.svg` (#3592) @kazuhitoyokoi
- - Fix browser console error Uncaught TypeError when searching certain terms (#3584) @Steve-Mcl
+ - Fix the Sidebar Config is not refreshed after a deploy (#4734) @GogoVega
+ - Fix checkboxes are not updated when calling `typedInput("value", "")` (#4729) @GogoVega
+ - Fix panning with middle mouse button on windows 10/11 (#4716) @corentin-sodebo-voile
+ - Add Japanese translation for sidebar tooltip (#4727) @kazuhitoyokoi
+ - Translate the number of items selected in the options list (#4730) @GogoVega
+ - Fix a checkbox should return a Boolean value and not the string `on` (#4715) @GogoVega
+ - Deleting a grouped node should update the group (#4714) @GogoVega
+ - Change the Config Node cursor to `pointer` (#4711) @GogoVega
+ - Add missing tooltips to Sidebar (#4713) @GogoVega
+ - Allow nodes to return additional history entries in onEditSave (#4710) @knolleary
+ - Update to Monaco 0.49.0 (#4725) @Steve-Mcl
+ - Add Japanese translations for 4.0.0-beta.3 (#4726) @kazuhitoyokoi
+ - Show lock on deploy if user is read-only (#4706) @knolleary
 
 Runtime
 
- - fix error on system-info action (#3589) @HiroyasuNishiyama
+ - Ensure all CSS variables are in the output file (#3743) @bonanitech
+ - Add httpAdminCookieOptions (#4718) @knolleary
+ - chore: migrate deprecated `util.isArray` (#4724) @Rotzbua
+ - Add --version cli args (#4707) @knolleary
+ - feat(grunt): fail if files are missing (#4739) @Rotzbua
+ - fix(node-red-pi): node-red not started by path (#4736) @Rotzbua
+ - fix(editor): remove trailing slash (#4735) @Rotzbua
+ - fix: remove deprecated mqtt.js (#4733) @Rotzbua 
 
 Nodes
 
- - I18n switch rule selector (#3602) @HiroyasuNishiyama
- - Handle removal of event handlers to allow mqtt client.end() to work (#3594) @PhilDay-CT
- - update link-call node info according to current behavior (#3597) @HiroyasuNishiyama
+ - Perform Proxy logic more like cURL (#4616) @Steve-Mcl
 
-
-#### 3.0.0-beta.1: Beta Release
-
-**Migration from 2.x**
-
- - Node-RED now requires Node.js 14.x or later.
- - New installs of Node-RED will default to the monaco editor.
-
+#### 4.0.0-beta.3: Beta Release
 
 Editor
 
- - Add Junctions (#3462) @knolleary
- - Allow node name to be auto-generated when added (#3478, #3538) @knolleary
- - Set monaco as default code editor as of v3.x (#3543) @Steve-Mcl
- - Update Monaco to V0.33.0 (#3522) @Steve-Mcl
- - Auto-complete Improvements (#3521) @Steve-Mcl
- - Add a tooltip to debug sidebar messages to reveal full path to node (#3503) @knolleary
- - Fix down arrow triggering menu in search box (#3507) @Steve-Mcl
- - Add Japanese translations for v3.0 (#3512) @kazuhitoyokoi
- - Add feature: Continuous search tools (search previous, search next) (#3405) @Steve-Mcl
- - Add feature: split-wire-to-links (#3399, #3476) @Steve-Mcl
- - Add copy button to node properties tables (#3390) @knolleary
- - Add info-tab search options dropdown to the regular search (#3395) @Steve-Mcl
- - New Feature: Add ability to find modified nodes/flows. (#3392) @Steve-Mcl
- - Code editor ux improvements around remembering state of each code editor in a flow (#3553) @Steve-Mcl
- - Make it easier to apply themes on SVG icons (#3515) @bonanitech
- - Add support of property validation message (#3438) @HiroyasuNishiyama
- - Ensure node validation tooltip is closed when field becomes valid (#3570) @knolleary
- - Add "search for" buttons to notifications (#3567) @Steve-Mcl
- - Don't let themes change node config colors (#3564) @bonanitech
- - Fix gap between typedInput containers borders (#3560) @bonanitech
- - Fix recording removed links in edit history (#3547) @knolleary
- - Remove unused SASS vars (#3536) @bonanitech
- - Add custom style for jQuery widgets borders (#3537) @bonanitech
- - fix out of scope reference of hasUnusedConfig variable (#3535) @HiroyasuNishiyama
- - correct "non string" check parenthesis (#3524) @Steve-Mcl
- - Ensure i18n of scoped package name (#3516) @Steve-Mcl
- - Prevent shortcut deploy when deploy button shaded (#3517) @Steve-Mcl
- - Fix: Sidebar "Configuration" filter button tooltip (#3500) @ralphwetzel
- - Add the ability to customize diff colors even more (#3499) @bonanitech
- - Do JSON comparison of old value/new value in editor (#3481) @Steve-Mcl
- - Fix nodes losing their wires when in an iframe (#3484) @zettca
- - Improve scroll into view (#3468) @Steve-Mcl
- - Do not show 1st tab if hidden when loading (#3464) @Steve-Mcl
+ - Improve background-deploy notification handling (#4692) @knolleary
+ - Hide workspace tab on middle mouse click (#4657) @Steve-Mcl
+ - multiplayer: Add user presence indicators (#4666) @knolleary
+ - Enable updating dependency node of package.json in project feature (#4676) @kazuhitoyokoi
+ - Add French translations for 4.0.0-beta.2 (#4681) @GogoVega
+ - Add Japanese translations for 4.0.0-beta.2 (#4674) @kazuhitoyokoi
+ - Fix saving of conf-type properties in module packaged subflows (#4658) @knolleary
+ - Add npm install timeout notification (#4662) @hardillb
+ - Fix undo of subflow env property edits (#4667) @knolleary
+ - Fix three error typos in monaco.js (#4660) @JoshuaCWebDeveloper
+ - docs: Add closing paragraph tag (#4664) @ZJvandeWeg
+ - Avoid login loops when autoLogin enabled but login fails (#4684) @knolleary
 
 Runtime
 
- - Fix importing external module from node-red module (#3541) @knolleary
- - Add support for multiple static paths with optional static root (#3542) @Steve-Mcl
- - Store external token when authenticating if provided (#3460) @ArFe
- - Support OAuth/OpenID logout (#3388) @mw75
- - Allow adminAuth to auto-login users when using passport strategy (#3519) @knolleary
- - Add runtime diagnostics admin endpoint (#3511) @Steve-Mcl
- - Don't start if user has no home directory (#3540) @hardillb
- - Error on invalid encrypted credentials (#3498) @sammachin
+ - Allow blank strings to be used for env var property substitutions (#4672) @knolleary
+ - Use rfdc for cloning pure JSON values (#4679) @knolleary
+ - fix: remove outdated Node 11+ check (#4314) @Rotzbua
+ - feat(ci): add new nodejs v22 (#4694) @Rotzbua
+ - fix(node): increase required node >=18.5 (#4690) @Rotzbua
+ - fix(dns): remove outdated node check (#4689) @Rotzbua
+ - fix(polyfill): remove import module polyfill (#4688) @Rotzbua
+ - Fix typo (#4686) @Rotzbua
 
 Nodes
 
- - Debug: Add message count option to Debug status (#3544 #3551) @rafaelmuynarsk @knolleary
- - File: Change basic Filename field to a typedInput (#3533) @Steve-Mcl
- - HTTP Request: Add UI for Http Request node headers (#3488) @Steve-Mcl
- - Inject: let inject optionally fire at start in only at time mode. (#3385) @dceejay
- - Link Call: Dynamic link call (#3463) @Steve-Mcl
- - Link Call: Display link targets of nodes in a regular flow, for Link Call nodes inside a subflow (#3528) @Steve-Mcl
- - MQTT: MQTT payload auto parsing improvements (#3530) @Steve-Mcl
- - MQTT: Add client and Runtime MQTT topic validation (#3563) @Steve-Mcl [dev]
- - MQTT: save and restore v5 config user props (#3562) @Steve-Mcl
- - MQTT: Fix incorrect MQTT status (#3552) @Steve-Mcl
- - MQTT: fix reference error of msg.status in debug node (#3526) @HiroyasuNishiyama
- - MQTT: Add unit tests for MQTT nodes (#3497) @Steve-Mcl
- - MQTT: fix typo of will properties (#3502) @Steve-Mcl
- - MQTT: ensure mqtt v5 props can be set false (#3472) @Steve-Mcl
- - Switch: add check for NaN in is of type number to be false (#3409) @dceejay
- - TCP: TCP node better split (#3465) @dceejay
- - Watch: Update Watch node to use node-watch module (#3559 #3569) @knolleary
- - WebSocket: call done after ws disconnects (#3531) @Steve-Mcl
+ - Pass full error object in Function node and copy over cause property (#4685) @knolleary
+ - Replacing vm.createScript in favour of vm.Script (#4534) @patlux
+
+#### 4.0.0-beta.2: Beta Release
+
+Editor
+
+ - Introduce multiplayer feature (#4629) @knolleary
+ - Separate the "add new config-node" option into a new (+) button (#4627) @GogoVega
+ - Retain Palette categories collapsed and filter to localStorage (#4634) @knolleary
+ - Ensure palette filter reapplies and clear up unknown categories (#4637) @knolleary
+ - Add support for plugin (only) modules to the palette manager (#4620) @knolleary
+ - Update monaco to latest and node types to 18 LTS (#4615) @Steve-Mcl
+
+Runtime
+
+ - Fix handling of subflow config-node select type in sf module (#4643) @knolleary
+ - Comms API updates (#4628) @knolleary
+ - Add French translations for 4.0.0-beta.1 (#4621) @GogoVega
+ - Add Japanese translations for 4.0.0-beta.1 (#4612) @kazuhitoyokoi
+
+Nodes
+ - Fix change node handling of replacing with boolean (#4639) @knolleary
+
+#### 4.0.0-beta.1: Beta Release
+
+Editor
+
+ - Click on id in debug panel highlights node or flow (#4439) @ralphwetzel
+ - Support config selection in a subflow env var (#4587) @Steve-Mcl
+ - Add timestamp formatting options to TypedInput (#4468) @knolleary
+ - Allow RED.view.select to select links (#4553) @lgrkvst
+ - Add auto-complete to flow/global/env typedInput types (#4480) @knolleary
+ - Improve the appearance of the Node-RED primary header (#4598) @joepavitt
+
+Runtime
+
+ - let settings.httpNodeAuth accept single middleware or array of middlewares (#4572) @kevinGodell
+ - Upgrade to JSONata 2.x (#4590) @knolleary
+ - Bump minimum version to node 18 (#4571) @knolleary
+ - npm: Remove production flag on npm invocation (#4347) @ZJvandeWeg
+ - Timer testing fix (#4367) @hlovdal
+ - Bump to 4.0.0-dev (#4322) @knolleary
+
+Nodes
+
+ - TCP node - when resetting, if no payload, stay disconnected @dceejay
+ - HTML node: add option for collecting attributes and content (#4513) @gorenje
+ - let split node specify property to split on, and join auto join correctly (#4386) @dceejay
+ - Add RFC4180 compliant mode to CSV node (#4540) @Steve-Mcl
+ - Fix change node to return boolean if asked (#4525) @dceejay
+ - Let msg.reset reset Tcp request node connection when in stay connected mode (#4406) @dceejay
+ - Let debug node status msg length be settable via settings (#4402) @dceejay
+ - Feat: Add ability to set headers for WebSocket client (#4436) @marcus-j-davies
 
 #### Older Releases
 

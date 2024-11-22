@@ -17,6 +17,8 @@
 var http = require("http");
 var https = require("https");
 var should = require("should");
+var sinon = require("sinon");
+var httpProxyHelper = require("nr-test-utils").require("@node-red/nodes/core/network/lib/proxyHelper.js");
 var express = require("express");
 var bodyParser = require('body-parser');
 var stoppable = require('stoppable');
@@ -31,6 +33,9 @@ var multer = require("multer");
 var RED = require("nr-test-utils").require("node-red/lib/red");
 var fs = require('fs-extra');
 var auth = require('basic-auth');
+var crypto = require("crypto");
+const { version } = require("os");
+const net = require('net')
 
 describe('HTTP Request Node', function() {
     var testApp;
@@ -57,6 +62,7 @@ describe('HTTP Request Node', function() {
     function startServer(done) {
         testPort += 1;
         testServer = stoppable(http.createServer(testApp));
+        const promises = []
         testServer.listen(testPort,function(err) {
             testSslPort += 1;
             console.log("ssl port", testSslPort);
@@ -78,13 +84,17 @@ describe('HTTP Request Node', function() {
                 */
             };
             testSslServer = stoppable(https.createServer(sslOptions,testApp));
-            testSslServer.listen(testSslPort, function(err){
-                if (err) {
-                    console.log(err);
-                } else {
-                    console.log("started testSslServer");
-                }
-            });
+            console.log('> start testSslServer')
+            promises.push(new Promise((resolve, reject) => {
+                testSslServer.listen(testSslPort, function(err){
+                    console.log(' done testSslServer')
+                    if (err) {
+                        reject(err)
+                    } else {
+                        resolve()
+                    }
+                });
+            }))
 
             testSslClientPort += 1;
             var sslClientOptions = {
@@ -94,10 +104,17 @@ describe('HTTP Request Node', function() {
                 requestCert: true
             };
             testSslClientServer = stoppable(https.createServer(sslClientOptions, testApp));
-            testSslClientServer.listen(testSslClientPort, function(err){
-                console.log("ssl-client", err)
-            });
-
+            console.log('> start testSslClientServer')
+            promises.push(new Promise((resolve, reject) => {
+                testSslClientServer.listen(testSslClientPort, function(err){
+                    console.log(' done testSslClientServer')
+                    if (err) {
+                        reject(err)
+                    } else {
+                        resolve()
+                    }
+                });
+            }))
             testProxyPort += 1;
             testProxyServer = stoppable(httpProxy(http.createServer()))
 
@@ -106,7 +123,17 @@ describe('HTTP Request Node', function() {
                     res.setHeader("x-testproxy-header", "foobar")
                 }
             })
-            testProxyServer.listen(testProxyPort)
+            console.log('> testProxyServer')
+            promises.push(new Promise((resolve, reject) => {
+                testProxyServer.listen(testProxyPort, function(err) {
+                    console.log(' done testProxyServer')
+                    if (err) {
+                        reject(err)
+                    } else {
+                        resolve()
+                    }
+                })
+            }))
 
             testProxyAuthPort += 1
             testProxyServerAuth = stoppable(httpProxy(http.createServer()))
@@ -128,9 +155,19 @@ describe('HTTP Request Node', function() {
                     res.setHeader("x-testproxy-header", "foobar")
                 }
             })
-            testProxyServerAuth.listen(testProxyAuthPort)
+            console.log('> testProxyServerAuth')
+            promises.push(new Promise((resolve, reject) => {
+                testProxyServerAuth.listen(testProxyAuthPort, function(err) {
+                    console.log(' done testProxyServerAuth')
+                    if (err) {
+                        reject(err)
+                    } else {
+                        resolve()
+                    }
+                })
+            }))
 
-            done(err);
+            Promise.all(promises).then(() => { done() }).catch(done)
         });
     }
 
@@ -159,6 +196,100 @@ describe('HTTP Request Node', function() {
         delete process.env.HTTP_PROXY;
         delete process.env.no_proxy;
         delete process.env.NO_PROXY;
+    }
+
+    function getDigestPassword() {
+        return 'digest-test-password';
+    }
+
+    function getDigest(algorithm, value) {
+        var hash;
+        if (algorithm === 'SHA-256') {
+            hash = crypto.createHash('sha256');
+        } else if (algorithm === 'SHA-512-256') {
+            hash = crypto.createHash('sha512');
+        } else {
+            hash = crypto.createHash('md5');
+        }
+        
+        var hex = hash.update(value).digest('hex');
+        if (algorithm === 'SHA-512-256') {
+            hex = hex.slice(0, 64);
+        }
+        return hex;
+    }
+
+    function getDigestResponse(req, algorithm, sess, realm, username, nonce, nc, cnonce, qop) {
+        var ha1 = getDigest(algorithm, username + ':' + realm + ':' + getDigestPassword());
+        if (sess) {
+            ha1 = getDigest(algorithm, ha1 + ':' + nonce + ':' + cnonce)
+        }
+        let ha2 = getDigest(algorithm, req.method + ':' + req.path);
+        return qop
+            ? getDigest(algorithm, ha1 + ':' + nonce + ':' + nc + ':' + cnonce + ':' + qop + ':' + ha2)
+            : getDigest(algorithm, ha1 + ':' + nonce + ':' + ha2);
+    }
+
+    function handleDigestResponse(req, res, algorithm, sess, qop) {
+        let realm = "node-red";
+        let nonce = "123456";
+        let nc = '00000001';
+        let algorithmValue = sess ? `${algorithm}-sess` : algorithm;
+
+        let authHeader = req.headers['authorization'];
+        if (!authHeader) {
+            let qopField = qop ? `qop="${qop}", ` : '';
+
+            res.setHeader(
+                'WWW-Authenticate',
+                `Digest ${qopField}realm="${realm}", nonce="${nonce}", algorithm="${algorithmValue}"`
+            );
+            res.status(401).end();
+            return;
+        }
+
+        var authFields = {};
+        let re = /([a-z0-9_-]+)=(?:"([^"]+)"|([a-z0-9_-]+))/gi;
+        for (;;) {
+            var match = re.exec(authHeader);
+            if (!match) {
+                break;
+            }
+            authFields[match[1]] = match[2] || match[3];
+        }
+        // console.log(JSON.stringify(authFields));
+
+        if (qop && authFields['qop'] != qop) {
+            console.log('test1');
+            res.status(401).end();
+            return;
+        }
+
+        if (
+            !authFields['username'] ||
+            !authFields['response'] ||
+            authFields['realm'] != realm ||
+            authFields['nonce'] != nonce ||
+            authFields['algorithm'] != algorithmValue
+        ) {
+            console.log('test2');
+            res.status(401).end();
+            return;
+        }
+
+        let username = authFields['username'];
+        let response = authFields['response'];
+        let cnonce = authFields['cnonce'] || '';
+        let expectedResponse = getDigestResponse(
+            req, algorithm, sess, realm, username, nonce, nc, cnonce, qop
+        );
+        if (!response || expectedResponse.toLowerCase() !== response.toLowerCase()) {
+            console.log('test3', response, expectedResponse);
+            res.status(401).end();
+            return;
+        }
+
+        res.status(201).end();
     }
 
     before(function(done) {
@@ -219,6 +350,21 @@ describe('HTTP Request Node', function() {
                 }
             }
             res.json(result);
+        });
+        testApp.get('/authenticate-digest-md5', function(req, res){
+            handleDigestResponse(req, res, "MD5", false, false);
+        });
+        testApp.get('/authenticate-digest-md5-sess', function(req, res){
+            handleDigestResponse(req, res, "MD5", true, 'auth');
+        });
+        testApp.get('/authenticate-digest-md5-qop', function(req, res){
+            handleDigestResponse(req, res, "MD5", false, 'auth');
+        });
+        testApp.get('/authenticate-digest-sha-256', function(req, res){
+            handleDigestResponse(req, res, "SHA-256", false, 'auth');
+        });
+        testApp.get('/authenticate-digest-sha-512-256', function(req, res){
+            handleDigestResponse(req, res, "SHA-512-256", false, 'auth');
         });
         testApp.get('/proxyAuthenticate', function(req, res){
             // var user = auth.parse(req.headers['proxy-authorization']);
@@ -317,7 +463,11 @@ describe('HTTP Request Node', function() {
             if (err) {
                 done(err);
             }
-            helper.startServer(done);
+            console.log('> helper.startServer')
+            helper.startServer(function(err) {
+                console.log('> helper started')
+                done(err)
+            });
         });
     });
 
@@ -345,6 +495,7 @@ describe('HTTP Request Node', function() {
     });
 
     afterEach(function() {
+        sinon.restore();
         process.env.http_proxy = preEnvHttpProxyLowerCase;
         process.env.HTTP_PROXY = preEnvHttpProxyUpperCase;
         // On Windows, if environment variable of NO_PROXY that includes lower cases
@@ -555,7 +706,7 @@ describe('HTTP Request Node', function() {
                 var n2 = helper.getNode("n2");
                 n2.on("input", function(msg) {
                     try {
-                        msg.should.have.property('payload','');
+                        msg.should.have.property('payload',{});
                         msg.should.have.property('statusCode',204);
                         done();
                     } catch(err) {
@@ -1527,7 +1678,7 @@ describe('HTTP Request Node', function() {
                         msg.payload.headers.should.have.property('Content-Type').which.startWith('application/json');
                         //msg.dynamicHeaderName should be present in headers with the value of msg.dynamicHeaderValue
                         msg.payload.headers.should.have.property('dyn-header-name').which.startWith('dyn-header-value');
-                        //static (custom) header set in Flow UI should be present 
+                        //static (custom) header set in Flow UI should be present
                         msg.payload.headers.should.have.property('static-header-name').which.startWith('static-header-value');
                         //msg.headers['location'] should be deleted because Flow UI "Location" header has a blank value
                         //ensures headers with matching characters but different case are eliminated
@@ -1651,33 +1802,88 @@ describe('HTTP Request Node', function() {
             })
         });
 
-        //Removing HTTP Proxy testcases as GOT + Proxy_Agent doesn't work with mock'd proxy
-        /* */
-        it('should use http_proxy', function(done) {
-            var flow = [{id:"n1",type:"http request",wires:[["n2"]],method:"POST",ret:"obj",url:getTestURL('/postInspect')},
-                {id:"n2", type:"helper"}];
+        it('should use env var http_proxy', function(done) {
+            const url = getTestURL('/postInspect')
+            const proxyUrl = "http://localhost:" + testProxyPort
+            
+            const flow = [
+                { id: "n1", type: "http request", wires: [["n2"]], method: "POST", ret: "obj", url: url },
+                { id: "n2", type: "helper" },
+            ];
+            const proxySpy = sinon.spy(httpProxyHelper, 'getProxyForUrl')
+            const testNode = [httpRequestNode, httpProxyNode];
             deleteProxySetting();
-            process.env.http_proxy = "http://localhost:" + testProxyPort;
-            helper.load(httpRequestNode, flow, function() {
-                var n1 = helper.getNode("n1");
-                var n2 = helper.getNode("n2");
-                n2.on("input", function(msg) {
-                    try {
-                        msg.should.have.property('statusCode',200);
-                        msg.payload.should.have.property('headers');
-                        //msg.payload.headers.should.have.property('x-testproxy-header','foobar');
-                        done();
-                    } catch(err) {
-                        done(err);
-                    }
-                });
-                n1.receive({payload:"foo"});
+            process.env.http_proxy = proxyUrl
+            helper.load(testNode, flow, function (msg) {
+                try {
+                    // static URL set in the nodes configuration and the proxy will be setup upon initialisation
+                    proxySpy.calledOnce.should.be.true()
+                    proxySpy.calledWith(url, { }).should.be.true()
+                    proxySpy.returnValues[0].should.be.equal(proxyUrl)
+                    done()
+                } catch (err) {
+                    done(err);
+                }
+            });
+        });
+
+        it('should use env var https_proxy', function(done) {
+            const url = getSslTestURL('/postInspect')
+            const proxyUrl = "http://localhost:" + testProxyPort
+            
+            const flow = [
+                { id: "n1", type: "http request", wires: [["n2"]], method: "POST", ret: "obj", url: url },
+                { id: "n2", type: "helper" },
+            ];
+            const proxySpy = sinon.spy(httpProxyHelper, 'getProxyForUrl')
+            const testNode = [httpRequestNode, httpProxyNode];
+            deleteProxySetting();
+            process.env.https_proxy = proxyUrl
+            helper.load(testNode, flow, function (msg) {
+                try {
+                    // static URL set in the nodes configuration and the proxy will be setup upon initialisation
+                    proxySpy.calledOnce.should.be.true()
+                    proxySpy.calledWith(url, { }).should.be.true()
+                    proxySpy.returnValues[0].should.be.equal(proxyUrl)
+                    done()
+                } catch (err) {
+                    done(err);
+                }
+            });
+        });
+
+        it('should not use env var http*_proxy when no_proxy is set', function(done) {
+            const url = getSslTestURL('/postInspect')
+            const proxyUrl = "http://localhost:" + testProxyPort
+            
+            const flow = [
+                { id: "n1", type: "http request", wires: [["n2"]], method: "POST", ret: "obj", url: url },
+                { id: "n2", type: "helper" },
+            ];
+            const proxySpy = sinon.spy(httpProxyHelper, 'getProxyForUrl')
+            const testNode = [httpRequestNode, httpProxyNode];
+            deleteProxySetting();
+            process.env.http_proxy = proxyUrl
+            process.env.https_proxy = proxyUrl
+            process.env.no_proxy = "localhost"
+            helper.load(testNode, flow, function (msg) {
+                try {
+                    // static URL set in the nodes configuration and the proxy will be setup upon initialisation
+                    proxySpy.calledOnce.should.be.true()
+                    proxySpy.calledWith(url, { }).should.be.true()
+                    proxySpy.returnValues[0].should.be.equal('')
+                    done()
+                } catch (err) {
+                    done(err);
+                }
             });
         });
 
         /* */
 
-        it('should use http_proxy when environment variable is invalid', function(done) {
+        // disabled with the introduction of proxyHelper. It is the responsibility of the user to enter a
+        // valid proxy URL
+        it.skip('should use http_proxy when environment variable is invalid', function(done) {
             var flow = [{id:"n1",type:"http request",wires:[["n2"]],method:"POST",ret:"obj",url:getTestURL('/postInspect')},
                 {id:"n2", type:"helper"}];
             deleteProxySetting();
@@ -1796,7 +2002,9 @@ describe('HTTP Request Node', function() {
         });
         /* */
 
-        it('should not use http-proxy-config when invalid url is specified', function(done) {
+        // disabled with the introduction of proxyHelper. It is the responsibility of the user to enter a
+        // valid proxy URL
+        it.skip('should not use http-proxy-config when invalid url is specified', function(done) {
             var flow = [
                 {id:"n1",type:"http request",wires:[["n2"]],method:"POST",ret:"obj",url:getTestURL('/postInspect'),proxy:"n3"},
                 {id:"n2", type:"helper"},
@@ -1842,6 +2050,135 @@ describe('HTTP Request Node', function() {
                     }
                 });
                 n1.receive({payload:"foo"});
+            });
+        });
+
+        it('should use UI proxy for statically configured URL', function (done) {
+            const url = getTestURL('/postInspect')
+            const proxyUrl = "http://localhost:" + testProxyPort
+            const flow = [
+                { id: "n1", type: "http request", wires: [["n2"]], method: "POST", ret: "obj", url: url, proxy: "n3" },
+                { id: "n2", type: "helper" },
+                { id: "n3", type: "http proxy", url: proxyUrl, noproxy: ["foo"] }
+            ];
+            const proxySpy = sinon.spy(httpProxyHelper, 'getProxyForUrl')
+            const testNode = [httpRequestNode, httpProxyNode];
+            deleteProxySetting();
+
+            // static URL set in the nodes configuration will cause the proxy setup to be called
+            // no no need to send a message to the node
+            helper.load(testNode, flow, function () {
+                try {
+                    // ensure getProxyForUrl was called and returned the correct proxy URL
+                    proxySpy.calledOnce.should.be.true()
+                    proxySpy.calledWith(url, { env: { no_proxy: "foo", http_proxy: proxyUrl, https_proxy: proxyUrl } }).should.be.true()
+                    proxySpy.returnValues[0].should.be.equal(proxyUrl)
+                    done();
+                } catch (err) {
+                    done(err);
+                }
+            });
+        });
+        it('should use UI proxy for HTTP URL passed in via msg', function (done) {
+            const url = getTestURL('/postInspect')
+            const proxyUrl = "http://localhost:" + testProxyPort
+            const flow = [
+                { id: "n1", type: "http request", wires: [["n2"]], method: "POST", ret: "obj", url: "", proxy: "n3" },
+                { id: "n2", type: "helper" },
+                { id: "n3", type: "http proxy", url: proxyUrl, noproxy: ["foo,bar"] }
+            ];
+            const proxySpy = sinon.spy(httpProxyHelper, 'getProxyForUrl')
+            const testNode = [httpRequestNode, httpProxyNode];
+            deleteProxySetting();
+            helper.load(testNode, flow, function () {
+                const n1 = helper.getNode("n1");
+                const n2 = helper.getNode("n2");
+                try {
+                    proxySpy.calledOnce.should.be.false() // proxy setup should not be called when there is no URL to check needs proxying
+                } catch (err) {
+                    done(err);
+                    return
+                }
+                n2.on("input", function (msg) {
+                    try {
+                        // ensure getProxyForUrl was called and returned the correct proxy URL
+                        proxySpy.calledOnce.should.be.true()
+                        proxySpy.calledWith(url, { env: { no_proxy: "foo,bar", http_proxy: proxyUrl, https_proxy: proxyUrl } }).should.be.true()
+                        proxySpy.returnValues[0].should.be.equal(proxyUrl)
+                        done();
+                    } catch (err) {
+                        done(err);
+                    }
+                });
+                n1.receive({ url: url });
+            });
+        });
+        it('should use UI proxy for HTTPS URL passed in via msg', function (done) {
+            const url = getSslTestURL('/postInspect')
+            const proxyUrl = "http://localhost:" + testProxyPort
+            const flow = [
+                { id: "n1", type: "http request", wires: [["n2"]], method: "POST", ret: "obj", url: "", proxy: "n3" },
+                { id: "n2", type: "helper" },
+                { id: "n3", type: "http proxy", url: proxyUrl, noproxy: ["foo,bar,baz"] }
+            ];
+            const proxySpy = sinon.spy(httpProxyHelper, 'getProxyForUrl')
+            const testNode = [httpRequestNode, httpProxyNode];
+            deleteProxySetting();
+            helper.load(testNode, flow, function () {
+                const n1 = helper.getNode("n1");
+                const n2 = helper.getNode("n2");
+                try {
+                    proxySpy.calledOnce.should.be.false() // proxy setup should not be called when there is no URL to check needs proxying
+                } catch (err) {
+                    done(err);
+                    return
+                }
+                n2.on("input", function (msg) {
+                    try {
+                        // ensure getProxyForUrl was called and returned the correct proxy URL
+                        proxySpy.calledOnce.should.be.true()
+                        proxySpy.calledWith(url, { env: { no_proxy: "foo,bar,baz", http_proxy: proxyUrl, https_proxy: proxyUrl } }).should.be.true()
+                        proxySpy.returnValues[0].should.be.equal(proxyUrl)
+                        done();
+                    } catch (err) {
+                        done(err);
+                    }
+                });
+                n1.receive({ url: url });
+            });
+        });
+        it('should not use UI proxy if noproxy excludes it', function (done) {
+            const url = getSslTestURL('/postInspect')
+            const proxyUrl = "http://localhost:" + testProxyPort
+            const flow = [
+                { id: "n1", type: "http request", wires: [["n2"]], method: "POST", ret: "obj", url: "", proxy: "n3" },
+                { id: "n2", type: "helper" },
+                { id: "n3", type: "http proxy", url: proxyUrl, noproxy: ["foo,localhost,baz"] }
+            ];
+            const proxySpy = sinon.spy(httpProxyHelper, 'getProxyForUrl')
+            const testNode = [httpRequestNode, httpProxyNode];
+            deleteProxySetting();
+            helper.load(testNode, flow, function () {
+                const n1 = helper.getNode("n1");
+                const n2 = helper.getNode("n2");
+                try {
+                    proxySpy.calledOnce.should.be.false() // proxy setup should not be called when there is no URL to check needs proxying
+                } catch (err) {
+                    done(err);
+                    return
+                }
+                n2.on("input", function (msg) {
+                    try {
+                        // ensure getProxyForUrl was called and returned no proxy
+                        proxySpy.calledOnce.should.be.true()
+                        proxySpy.calledWith(url, { env: { no_proxy: "foo,localhost,baz", http_proxy: proxyUrl, https_proxy: proxyUrl } }).should.be.true()
+                        proxySpy.returnValues[0].should.be.equal('')
+                        done();
+                    } catch (err) {
+                        done(err);
+                    }
+                });
+                n1.receive({ url: url });
             });
         });
 
@@ -2016,6 +2353,100 @@ describe('HTTP Request Node', function() {
         });
         */
 
+        it('should authenticate on server - digest MD5', function(done) {
+            var flow = [{id:"n1",type:"http request",wires:[["n2"]],method:"GET",ret:"obj",authType:"digest", url:getTestURL('/authenticate-digest-md5')},
+                {id:"n2", type:"helper"}];
+            helper.load(httpRequestNode, flow, function() {
+                var n1 = helper.getNode("n1");
+                var n2 = helper.getNode("n2");
+                n1.credentials = {user:'xxxuser', password:getDigestPassword()};
+                n2.on("input", function(msg) {
+                    try {
+                        msg.should.have.property('statusCode',201);
+                        done();
+                    } catch(err) {
+                        done(err);
+                    }
+                });
+                n1.receive({payload:"foo"});
+            });
+        });
+
+        it('should authenticate on server - digest MD5 sess', function(done) {
+            var flow = [{id:"n1",type:"http request",wires:[["n2"]],method:"GET",ret:"obj",authType:"digest", url:getTestURL('/authenticate-digest-md5-sess')},
+                {id:"n2", type:"helper"}];
+            helper.load(httpRequestNode, flow, function() {
+                var n1 = helper.getNode("n1");
+                var n2 = helper.getNode("n2");
+                n1.credentials = {user:'xxxuser', password:getDigestPassword()};
+                n2.on("input", function(msg) {
+                    try {
+                        msg.should.have.property('statusCode',201);
+                        done();
+                    } catch(err) {
+                        done(err);
+                    }
+                });
+                n1.receive({payload:"foo"});
+            });
+        });
+
+        it('should authenticate on server - digest MD5 qop', function(done) {
+            var flow = [{id:"n1",type:"http request",wires:[["n2"]],method:"GET",ret:"obj",authType:"digest", url:getTestURL('/authenticate-digest-md5-qop')},
+                {id:"n2", type:"helper"}];
+            helper.load(httpRequestNode, flow, function() {
+                var n1 = helper.getNode("n1");
+                var n2 = helper.getNode("n2");
+                n1.credentials = {user:'xxxuser', password:getDigestPassword()};
+                n2.on("input", function(msg) {
+                    try {
+                        msg.should.have.property('statusCode',201);
+                        done();
+                    } catch(err) {
+                        done(err);
+                    }
+                });
+                n1.receive({payload:"foo"});
+            });
+        });
+
+        it('should authenticate on server - digest SHA-256', function(done) {
+            var flow = [{id:"n1",type:"http request",wires:[["n2"]],method:"GET",ret:"obj",authType:"digest", url:getTestURL('/authenticate-digest-sha-256')},
+                {id:"n2", type:"helper"}];
+            helper.load(httpRequestNode, flow, function() {
+                var n1 = helper.getNode("n1");
+                var n2 = helper.getNode("n2");
+                n1.credentials = {user:'xxxuser', password:getDigestPassword()};
+                n2.on("input", function(msg) {
+                    try {
+                        msg.should.have.property('statusCode',201);
+                        done();
+                    } catch(err) {
+                        done(err);
+                    }
+                });
+                n1.receive({payload:"foo"});
+            });
+        });
+
+        it('should authenticate on server - digest SHA-512-256', function(done) {
+            var flow = [{id:"n1",type:"http request",wires:[["n2"]],method:"GET",ret:"obj",authType:"digest", url:getTestURL('/authenticate-digest-sha-512-256')},
+                {id:"n2", type:"helper"}];
+            helper.load(httpRequestNode, flow, function() {
+                var n1 = helper.getNode("n1");
+                var n2 = helper.getNode("n2");
+                n1.credentials = {user:'xxxuser', password:getDigestPassword()};
+                n2.on("input", function(msg) {
+                    try {
+                        msg.should.have.property('statusCode',201);
+                        done();
+                    } catch(err) {
+                        done(err);
+                    }
+                });
+                n1.receive({payload:"foo"});
+            });
+        });
     });
 
     describe('file-upload', function() {
@@ -2262,6 +2693,63 @@ describe('HTTP Request Node', function() {
                 n1.receive({
                     headers: { cookie: 'requestCookie=request1' }
                 });
+            });
+        });
+    });
+
+    describe('should parse broken headers', function() {
+        let port = testPort++
+
+        let server;
+
+        before(function() {
+            server = net.createServer(function (socket) {
+                socket.write("HTTP/1.0 200\nContent-Type: text/plain\n\nHelloWorld")
+                socket.end()
+            })
+
+            server.listen(port,'127.0.0.1', function(err) {
+            })
+        });
+
+        after(function() {
+            server.close()
+        });
+
+        it('should accept broken headers', function (done) {
+            var flow = [{id:'n1',type:'http request',wires:[['n2']],method:'GET',ret:'obj',url:`http://localhost:${port}/`, insecureHTTPParser: true},
+            {id:"n2", type:"helper"}];
+            helper.load(httpRequestNode, flow, function() {
+                var n1 = helper.getNode("n1");
+                var n2 = helper.getNode("n2");
+                n2.on('input', function(msg) {
+                    try {
+                        msg.payload.should.equal('HelloWorld')
+                        done()
+                    } catch (err) {
+                        done(err)
+                    }
+                })
+                n1.receive({payload: 'foo'})
+            });
+        });
+
+        it('should reject broken headers', function (done) {
+            var flow = [{id:'n1',type:'http request',wires:[['n2']],method:'GET',ret:'obj',url:`http://localhost:${port}/`},
+            {id:"n2", type:"helper"}];
+            helper.load(httpRequestNode, flow, function() {
+                var n1 = helper.getNode("n1");
+                var n2 = helper.getNode("n2");
+                n2.on('input', function(msg) {
+                    try{
+                        msg.payload.should.match(/RequestError: Parse Error/)
+                        done()
+                    } catch (err) {
+                        done(err)
+                    }
+                })
+                n1.receive({payload: 'foo'})
+
             });
         });
     });
